@@ -1,0 +1,136 @@
+EESchema-DOCLIB  Version 2.0  Date: Ср 15 окт 2014 03:17:08
+#
+$CMP 4067
+D 16-channel analogue multiplexer/demultiplexer
+$ENDCMP
+#
+$CMP A3144UA
+D Digital Hall effect sensor 3 pins SIP package
+K SENSOR HALL
+F sensors/allegro_A3144.pdf
+$ENDCMP
+#
+$CMP ATMEGA48A-A-OK
+D ATMEGA48A, TQFP32, 4k Flash, 512B SRAM, 256B EEPROM
+K AVR 8bit Microcontroller MegaAVR
+F http://www.atmel.com/dyn/resources/prod_documents/doc8271.pdf
+$ENDCMP
+#
+$CMP BAT54A
+D Double schottky diode with common anode
+$ENDCMP
+#
+$CMP BAT54C
+D Double schottky diode with common cathode
+$ENDCMP
+#
+$CMP BAV99
+D Double schottky diode with common cathode
+$ENDCMP
+#
+$CMP C-POL
+D Polarized capacitor
+$ENDCMP
+#
+$CMP DUAL_SWITCH
+D Dual Switch inverseur
+K switch
+$ENDCMP
+#
+$CMP ECONN_5
+D Symbole general de connecteur
+K CONN
+$ENDCMP
+#
+$CMP ELED
+K LED
+$ENDCMP
+#
+$CMP HV9910
+D High-voltage PWM LED driver with external MOSFET
+K LED driver
+$ENDCMP
+#
+$CMP HV9961
+D High-voltage PWM LED driver with external MOSFET
+K LED driver
+$ENDCMP
+#
+$CMP LED-5050
+K LED
+$ENDCMP
+#
+$CMP LED-POWER
+K LED
+$ENDCMP
+#
+$CMP LM5009
+D 150 mA, 100V Step-Down Switching Regulator
+K PWM
+$ENDCMP
+#
+$CMP LM5010M
+D LM5010M
+$ENDCMP
+#
+$CMP LP2980
+D Micropower 50 mA Ultra Low-Dropout Voltage Regulator
+$ENDCMP
+#
+$CMP LP2980-ADJ
+D Micropower 50 mA Ultra Low-Dropout Voltage Regulator
+$ENDCMP
+#
+$CMP LSM303DLHC
+D Ultra-compact high-performance eCompass module: 3D accelerometer and 3D magnetometer
+$ENDCMP
+#
+$CMP NMOS
+F transistors/mos/*.*
+$ENDCMP
+#
+$CMP NPN_TO92
+F transistors/bipolar/*.*
+$ENDCMP
+#
+$CMP PHOTORES
+K LED
+$ENDCMP
+#
+$CMP PINH_5
+D Symbole general de connecteur
+K CONN
+$ENDCMP
+#
+$CMP PMOS
+F transistors/mos/*.*
+$ENDCMP
+#
+$CMP SWITCH
+D Switch inverseur
+K switch
+$ENDCMP
+#
+$CMP TLC272
+D Generic dual opamp in 8-lead body
+$ENDCMP
+#
+$CMP TLV271-DBV
+D Low-power, 3MHz rail-to-rail single opamp in 5-lead SOT23
+$ENDCMP
+#
+$CMP XPOT
+D Potentionmetre
+K R
+$ENDCMP
+#
+$CMP ZDIOSCH
+D Diode schottky
+K DEV DIODE
+$ENDCMP
+#
+$CMP ZNMOS
+F transistors/mos/*.*
+$ENDCMP
+#
+#End Doc Library
