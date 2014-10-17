@@ -1,0 +1,37 @@
+iWattnick project
+-----------------
+
+The project files are licensed under the terms of the
+GNU General Public License, version 3, which can be found here:
+
+    http://www.gnu.org/licenses/licenses.html
+
+
+CMSIS library
+-------------
+
+The CMSIS library is licensed under the terms, described in
+the file that you can download here:
+
+    http://www.keil.com/pack/doc/cmsis/general/html/CMSIS_END_USER_LICENCE_AGREEMENT.pdf
+
+The library has been slightly re-ordered to suit project folder
+structure and build system. Also, only the essential source code
+files were included here, you may download the full CMSIS package
+from ARM web site:
+
+    https://silver.arm.com/browse/CMSIS
+
+Only the core, device and dsp components were included.
+
+As the license states (last paragraph), the software portions that
+are deployed in the application program are under a BSD License,
+which can be found in the file
+
+    CMSIS-BSD-license.txt
+
+The CMSIS-core component, which has been created by ST Microelectronics,
+is licensed under MCD-ST Liberty SW License Agreement V2.
+You may obtain a copy of the License at:
+
+    http://www.st.com/software_license_agreement_liberty_v2
