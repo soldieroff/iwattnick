@@ -2,6 +2,7 @@
 
 # Режим сборки по умолчанию
 MODE = release
+HARDWARE ?= iwattnick
 
 # Описание нашей аппаратной платформы
 stm32.hw2cpu.iwattnick=stm32f100c8
