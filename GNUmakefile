@@ -37,9 +37,10 @@ endif
 
 include $(DIR.TIBS)/rules.mak
 # These rules must always come last
-#include tibs/extra/flash-rules.mak
-#include tibs/extra/ihex-rules.mak
-#include tibs/extra/bin-rules.mak
+include \
+    tibs/extra/flash-rules.mak \
+    tibs/extra/ihex-rules.mak \
+    tibs/extra/bin-rules.mak
 
 showhelp::
 	$(call SAY,Target hardware: $(HARDWARE)$(COMMA) cpu: $(CPU)$(COMMA) core: $(CORE))

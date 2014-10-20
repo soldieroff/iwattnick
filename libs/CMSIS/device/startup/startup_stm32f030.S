@@ -187,12 +187,14 @@ g_pfnVectors:
   .word SPI2_IRQHandler
   .word USART1_IRQHandler
   .word USART2_IRQHandler
+
+#ifdef BOOTRAM
   .word 0
   .word 0
   .word 0
   .word BootRAM          /* @0x108. This is for boot in RAM mode for 
                             STM32F0xx devices. */
- 
+#endif
 
 /*******************************************************************************
 *

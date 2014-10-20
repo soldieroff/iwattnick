@@ -1,6 +1,7 @@
 TESTS += tstandby
 DESCRIPTION.tstandby = STANDBY mode usage example
 FLASH.TARGETS += tstandby
+IHEX.TARGETS += tstandby
 
 TARGETS.tstandby = tstandby$E
 CFLAGS.tstandby += -DUSE_STDPERIPH_DRIVER -Itests/stm32vl_discovery/tstandby

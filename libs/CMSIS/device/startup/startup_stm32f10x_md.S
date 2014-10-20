@@ -180,7 +180,9 @@ g_pfnVectors:
 	.word	EXTI15_10_IRQHandler
 	.word	RTCAlarm_IRQHandler
 	.word	USBWakeUp_IRQHandler	
-  .word	0
+
+#ifdef BOOTRAM
+	.word	0
 	.word	0
 	.word	0
 	.word	0
@@ -189,7 +191,8 @@ g_pfnVectors:
 	.word	0
 	.word	BootRAM          /* @0x108. This is for boot in RAM mode for 
                             STM32F10x Medium Density devices. */
-   
+#endif
+
 /*******************************************************************************
 *
 * Provide weak aliases for each Exception handler to the Default_Handler. 

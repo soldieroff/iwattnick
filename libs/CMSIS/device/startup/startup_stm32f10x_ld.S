@@ -118,8 +118,7 @@ Infinite_Loop:
  	.section	.isr_vector,"a",%progbits
 	.type	g_pfnVectors, %object
 	.size	g_pfnVectors, .-g_pfnVectors
-    
-    
+
 g_pfnVectors:
 	.word	_estack
 	.word	Reset_Handler
@@ -179,8 +178,10 @@ g_pfnVectors:
 	.word	0
 	.word	EXTI15_10_IRQHandler
 	.word	RTCAlarm_IRQHandler
-	.word	USBWakeUp_IRQHandler	
-  .word	0
+	.word	USBWakeUp_IRQHandler
+
+#ifdef BOOTRAM
+	.word	0
 	.word	0
 	.word	0
 	.word	0
@@ -189,7 +190,8 @@ g_pfnVectors:
 	.word	0
 	.word	BootRAM        /* @0x108. This is for boot in RAM mode for 
                           STM32F10x Low Density devices.*/
-   
+#endif
+
 /*******************************************************************************
 *
 * Provide weak aliases for each Exception handler to the Default_Handler. 

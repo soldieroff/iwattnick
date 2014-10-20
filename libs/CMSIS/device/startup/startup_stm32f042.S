@@ -190,9 +190,10 @@ g_pfnVectors:
   .word 0
   .word CEC_CAN_IRQHandler
   .word USB_IRQHandler
+#ifdef BOOTRAM
   .word BootRAM          /* @0x108. This is for boot in RAM mode for 
                             STM32F0xx devices. */
-  
+#endif
 
 
 /*******************************************************************************
