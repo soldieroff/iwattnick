@@ -60,10 +60,10 @@ ARM-NONE-EABI-GCC.ARFLAGS ?= crs
 
 # Arbitrary assumptions about the programmer options
 # Most likely user will have to override this
-ARM-NONE-EABI-GCC.FLASHFLAGS ?= -A "$(STLINK.ADDR)"
+ARM-NONE-EABI-GCC.FLASHFLAGS ?= $(STM32.FLASH.ORIGIN)
 
 ARM-NONE-EABI-GCC.OBJCOPY ?= $(ARM-NONE-EABI-GCC.PFX)objcopy
-ARM-NONE-EABI-GCC.OCFLAGS ?= -j .text -j .data
+ARM-NONE-EABI-GCC.OCFLAGS ?= -j .isr_vector -j .text -j .ARM.extab -j .preinit_array -j .init_array -j .fini_array -j .data
 
 # Translate application/library pseudo-name into an actual file name
 XFNAME.ARM-NONE-EABI-GCC = $(addprefix $$(OUT),\
@@ -149,7 +149,7 @@ $1: $(MAKEDEP_DEP) $2
 $(ARM-NONE-EABI-GCC.EXTRA.MKDRULES)
 endef
 
-ARM-NONE-EABI-GCC.FLASH=tibs/extra/flash-elf.awk "$1" $(ARM-NONE-EABI-GCC.FLASHFLAGS) $2
+ARM-NONE-EABI-GCC.FLASH=st-flash write $1 $(if $2,$2,$(ARM-NONE-EABI-GCC.FLASHFLAGS))
 
 # Flashing rules ($1 = module name, $2 = unexpanded target file,
 # $3 = full target file name)
@@ -162,28 +162,28 @@ endef
 LINK.ARM-NONE-EABI-GCC.HEX = $(ARM-NONE-EABI-GCC.OBJCOPY) $< $(ARM-NONE-EABI-GCC.OCFLAGS) $1 -O ihex $@
 
 # iHEXing rules ($1 = module name, $2 = unexpanded target file,
-# $3 = full target file name)
+# $3 = full target file name, $4 = executable name)
 define MKIXRULES.ARM-NONE-EABI-GCC
 $(if $(findstring $E,$2),
-$3.hex: $3
+$3: $4
 	$(if $V,,@echo LINK.ARM-NONE-EABI-GCC.HEX $$@ &&)$$(call LINK.ARM-NONE-EABI-GCC.HEX,$(OCFLAGS.$3) $(OCFLAGS.$4)))
 endef
 
 LINK.ARM-NONE-EABI-GCC.BIN ?= $(ARM-NONE-EABI-GCC.OBJCOPY) $< $(ARM-NONE-EABI-GCC.OCFLAGS) $1 -O binary $@
 
 # Rules to build binary images ($1 = module name, $2 = unexpanded target file,
-# $3 = full target file name)
+# $3 = full target file name, $4 = executable name)
 define MKBINRULES.ARM-NONE-EABI-GCC
 $(if $(findstring $E,$2),
-$3.bin: $3
+$3: $4
 	$(if $V,,@echo LINK.ARM-NONE-EABI-GCC.BIN $$@ &&)\
 	$$(call LINK.ARM-NONE-EABI-GCC.BIN,$(OCFLAGS.$3) $(OCFLAGS.$4),$(strip $(FLASHFLAGS.$1) $(FLASHFLAGS.$2))))
 endef
 
 # Правила генерации скрипта для линкера
-ARM-NONE-EABI-GCC.LDSCRIPT = $(OUT)$(word 7,$(STM32.MEM))_flash.ld
+ARM-NONE-EABI-GCC.LDSCRIPT = $(OUT)stm32_flash.ld
 
-$(ARM-NONE-EABI-GCC.LDSCRIPT): tibs/extra/ldscripts/$(word 7,$(STM32.MEM))_flash.ld.in
+$(ARM-NONE-EABI-GCC.LDSCRIPT): tibs/extra/stm32_flash.ld.in
 	$(if $V,,@echo ARM-NONE-EABI-GCC.CPP $@ &&)$(ARM-NONE-EABI-GCC.CPP) \
 		$(ARM-NONE-EABI-GCC.CPPFLAGS) -P -o $@ $< \
 		-DSTM32_STACK_ADDRESS=$(STM32.RAM.END) \

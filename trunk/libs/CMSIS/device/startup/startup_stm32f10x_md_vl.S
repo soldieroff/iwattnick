@@ -193,6 +193,8 @@ g_pfnVectors:
   .word  0
   .word  TIM6_DAC_IRQHandler
   .word  TIM7_IRQHandler  
+
+#ifdef BOOTRAM
   .word  0
   .word  0
   .word  0
@@ -238,7 +240,8 @@ g_pfnVectors:
   .word  0
   .word  BootRAM          /* @0x01CC. This is for boot in RAM mode for 
                             STM32F10x Medium Value Line Density devices. */
-   
+#endif
+
 /*******************************************************************************
 * Provide weak aliases for each Exception handler to the Default_Handler. 
 * As they are weak aliases, any function with the same name will override 

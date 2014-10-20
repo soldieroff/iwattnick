@@ -1,6 +1,7 @@
 TESTS += twwdg
 DESCRIPTION.twwdg = Default STM32VL-DISCOVERY board firmware
 FLASH.TARGETS += twwdg
+IHEX.TARGETS += twwdg
 
 TARGETS.twwdg = twwdg$E
 CFLAGS.twwdg += -DUSE_STDPERIPH_DRIVER -Itests/stm32vl_discovery/twwdg

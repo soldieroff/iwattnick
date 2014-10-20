@@ -189,10 +189,13 @@ g_pfnVectors:
   .word USART2_IRQHandler
   .word 0
   .word CEC_IRQHandler
+
+#ifdef BOOTRAM
   .word 0
   .word BootRAM          /* @0x108. This is for boot in RAM mode for 
                             STM32F0xx devices. */
- 
+#endif
+
 /*******************************************************************************
 *
 * Provide weak aliases for each Exception handler to the Default_Handler.

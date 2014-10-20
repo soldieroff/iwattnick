@@ -200,6 +200,8 @@ g_pfnVectors:
   .word  DMA2_Channel2_IRQHandler
   .word  DMA2_Channel3_IRQHandler
   .word  DMA2_Channel4_5_IRQHandler
+
+#ifdef BOOTRAM
   .word  0
   .word  0
   .word  0
@@ -246,6 +248,8 @@ g_pfnVectors:
   .word  0
   .word  BootRAM       /* @0x1E0. This is for boot in RAM mode for 
                          STM32F10x XL Density devices. */
+#endif
+
 /*******************************************************************************
 *
 * Provide weak aliases for each Exception handler to the Default_Handler. 

@@ -33,6 +33,7 @@ STM32.FLASH.END = $(word 3,$(STM32.MEM))
 STM32.RAM.ORIGIN = $(word 4,$(STM32.MEM))
 STM32.RAM.SIZE = $(word 5,$(STM32.MEM))
 STM32.RAM.END = $(word 6,$(STM32.MEM))
+STM32.FAMILY = $(word 7,$(STM32.MEM))
 
 # User may override these, if needed
 STM32_MIN_HEAP_SIZE ?= 0

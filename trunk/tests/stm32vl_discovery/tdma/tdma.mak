@@ -1,6 +1,7 @@
 TESTS += tdma
 DESCRIPTION.tdma = DMA transfer demo
 FLASH.TARGETS += tdma
+IHEX.TARGETS += tdma
 
 TARGETS.tdma = tdma$E
 CFLAGS.tdma += -DUSE_STDPERIPH_DRIVER -Itests/stm32vl_discovery/tdma

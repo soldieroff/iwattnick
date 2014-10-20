@@ -24,3 +24,6 @@ endif
 
 TARGETS.CMSIS = CMSIS$L
 SRC.CMSIS$L = $(DEVSYS) $(STARTUP) $(wildcard libs/CMSIS/dsp/*/*.c)
+
+# Uncomment the following to support booting from RAM on STM32F0 and STM32F1
+#CFLAGS.CMSIS += -DBOOTRAM

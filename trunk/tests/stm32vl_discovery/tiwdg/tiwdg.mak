@@ -1,6 +1,7 @@
 TESTS += tiwdg
 DESCRIPTION.tiwdg = IWDG watchdog timer demo
 FLASH.TARGETS += tiwdg
+IHEX.TARGETS += tiwdg
 
 TARGETS.tiwdg = tiwdg$E
 CFLAGS.tiwdg += -DUSE_STDPERIPH_DRIVER -Itests/stm32vl_discovery/tiwdg
