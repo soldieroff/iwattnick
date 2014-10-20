@@ -7,4 +7,6 @@ DIR.INCLUDE.C += :include/hardware/$(HARDWARE)
 
 TARGETS.hardware = hardware$L
 SRC.hardware$L = $(HARDWARE.FILES)
+
+include $(wildcard libs/hardware/$(HARDWARE)/*.mak)
 endif

@@ -34,6 +34,10 @@ STM32.RAM.ORIGIN = $(word 4,$(STM32.MEM))
 STM32.RAM.SIZE = $(word 5,$(STM32.MEM))
 STM32.RAM.END = $(word 6,$(STM32.MEM))
 
+# User may override these, if needed
+STM32_MIN_HEAP_SIZE ?= 0
+STM32_MIN_STACK_SIZE ?= 0x200
+
 MATH.cortex-m0 = ARM_MATH_CM0
 MATH.cortex-m0plus = ARM_MATH_CM0PLUS
 MATH.cortex-m3 = ARM_MATH_CM3
