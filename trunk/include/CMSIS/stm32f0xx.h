@@ -53,6 +53,9 @@
 #ifndef __STM32F0XX_H
 #define __STM32F0XX_H
 
+/* Board-specific definitions, you can override any of the macros following below */
+#include CMSIS_HARDWARE_H
+
 #ifdef __cplusplus
  extern "C" {
 #endif 

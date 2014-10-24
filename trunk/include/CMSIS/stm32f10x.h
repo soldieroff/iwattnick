@@ -37,6 +37,9 @@
  extern "C" {
 #endif
 
+/* Board-specific definitions, you can override any of the macros following below */
+#include CMSIS_HARDWARE_H
+
 /** @addtogroup Library_configuration_section
   * @{
   */

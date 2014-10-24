@@ -39,6 +39,7 @@ STM32.FAMILY = $(word 7,$(STM32.MEM))
 STM32_MIN_HEAP_SIZE ?= 0
 STM32_MIN_STACK_SIZE ?= 0x200
 
+# Набор инструкций для библиотеки CMSIS/arm_math.h
 MATH.cortex-m0 = ARM_MATH_CM0
 MATH.cortex-m0plus = ARM_MATH_CM0PLUS
 MATH.cortex-m3 = ARM_MATH_CM3
