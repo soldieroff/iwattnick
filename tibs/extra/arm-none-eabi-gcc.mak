@@ -13,10 +13,10 @@ ARM-NONE-EABI-GCC.SFLAGS ?= -pipe -D__ASSEMBLY__ -D__ASSEMBLER__ \
     $(ARM-NONE-EABI-GCC.CFLAGS.$(CORE)) \
     $(ARM-NONE-EABI-GCC.CFLAGS.$(MODE)) \
     $(ARM-NONE-EABI-GCC.CFLAGS.DEF) $(ARM-NONE-EABI-GCC.CFLAGS.INC) $(CFLAGS)
-ARM-NONE-EABI-GCC.CFLAGS.DEF = $(CFLAGS.DEF)
+ARM-NONE-EABI-GCC.CFLAGS.DEF = $(CFLAGS.DEF) -ftrack-macro-expansion=0
 ARM-NONE-EABI-GCC.CFLAGS.INC = $(if $(DIR.INCLUDE.C),-I$(subst :, -I,$(DIR.INCLUDE.C)))
 
-ARM-NONE-EABI-GCC.CFLAGS.release ?= -g -Os -flto \
+ARM-NONE-EABI-GCC.CFLAGS.release ?= -g -Os \
     -fno-builtin -ffunction-sections -fdata-sections -fomit-frame-pointer -mabi=aapcs \
     -fno-unroll-loops -ffast-math -ftree-vectorize
 ARM-NONE-EABI-GCC.CFLAGS.debug ?= -g -D__DEBUG__ \
@@ -46,7 +46,7 @@ ARM-NONE-EABI-GCC.LDFLAGS ?= -pipe $(ARM-NONE-EABI-GCC.CFLAGS.$(CORE)) \
     $(ARM-NONE-EABI-GCC.LDFLAGS.$(MODE)) $(LDFLAGS)
 ARM-NONE-EABI-GCC.LDFLAGS.LIBS ?= $(LDLIBS)
 
-ARM-NONE-EABI-GCC.LDFLAGS.release ?= -g -flto
+ARM-NONE-EABI-GCC.LDFLAGS.release ?= -g
 ARM-NONE-EABI-GCC.LDFLAGS.debug ?= -g
 
 ARM-NONE-EABI-GCC.LINKLIB = $(if $(findstring $L,$1),,$(if $(findstring /,$1),$1,-l$1))

@@ -56,7 +56,10 @@
 #ifdef __cplusplus
  extern "C" {
 #endif /* __cplusplus */
-  
+
+/* Board-specific definitions, you can override any of the macros following below */
+#include CMSIS_HARDWARE_H
+
 /** @addtogroup Library_configuration_section
   * @{
   */

@@ -39,7 +39,7 @@ SUBMAKEFILES += tibs/extra/arm-none-eabi-gcc.mak $(wildcard tibs/extra/tool-*.ma
 # Hardware definitions for STM32 microcontroller family
 include tibs/extra/stm32.mak
 
-CFLAGS += -DHARDWARE_H=\"hardware-$(HARDWARE).h\"
-SFLAGS += -DHARDWARE_H=\"hardware-$(HARDWARE).h\"
+CFLAGS += -DHARDWARE_H=\"hardware-$(HARDWARE).h\" -DCMSIS_HARDWARE_H=\"cmsis-$(HARDWARE).h\"
+SFLAGS += -DHARDWARE_H=\"hardware-$(HARDWARE).h\" -DCMSIS_HARDWARE_H=\"cmsis-$(HARDWARE).h\"
 
 OUT = $(OUTBASE)/$(ARCH)-$(TARGET).$(HARDWARE)/$(MODE)/
