@@ -12,6 +12,10 @@ static volatile uint32_t clock;
 
 int main ()
 {
+    // Отключаем JTAG, оставляем только SWD
+    RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+    AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
+
     // --- GPIOs (defined in hardware*.h) --- //
 
     // Включим тактирование GPIO для обоих светодиодов и кнопки
@@ -31,7 +35,7 @@ int main ()
 
     // Настроим GPIO для кнопки - INPUT Z-state
     *GPIO_CR (USRBUT) = GPIO_SET (*GPIO_CR (USRBUT),
-        USRBUT, INPUT, Z);
+        USRBUT, INPUT, FLOATING);
 
     // Настроим системный таймер на 32 прерывания в секунду
     if (SysTick_Config (SystemCoreClock / 32))

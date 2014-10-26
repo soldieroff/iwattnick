@@ -4,6 +4,10 @@ static volatile uint32_t clock;
 
 int main (void)
 {
+    // Отключаем JTAG, оставляем только SWD
+    RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+    AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
+
 #if 0
     // --- Real-Time Clock (RTC) --- //
 
