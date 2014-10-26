@@ -21,6 +21,12 @@
 #define USRBUT_PORT		A
 #define USRBUT_BIT		0
 
+// USART1 I/O ports
+#define USART1_TX_PORT		A
+#define USART1_TX_BIT		9
+#define USART1_RX_PORT		A
+#define USART1_RX_BIT		10
+
 // That's all we have, folks!
 
 #endif // __HARDWARE_H__

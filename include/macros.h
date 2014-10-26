@@ -67,7 +67,7 @@
 /// Analog mode
 #define GPIO_CNF_ANALOG		0
 /// Floating input (reset state)
-#define GPIO_CNF_Z		1
+#define GPIO_CNF_FLOATING	1
 /// Input with pull-up / pull-down
 #define GPIO_CNF_PUD		2
 

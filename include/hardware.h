@@ -6,6 +6,13 @@
 #ifndef __HARDWARE_H__
 #define __HARDWARE_H__
 
+/**
+ * @file hardware.h
+ * This is just a template for your board-specific header file.
+ * It is supposed to include the MCU-specific header files, and also
+ * declare the on-board hardware connections.
+ */
+
 // This always comes for free
 #include "macros.h"
 
@@ -16,15 +23,16 @@
 //#include "stm32f30x.h"
 //#include "stm32f4xx.h"
 
-/*
+/**
  * A hardware definition is supposed to declare all the ports and other
  * resources used (timers, DMAs and so on). There are a lot of useful
  * macros in "macros.h" which can be later used to conveniently set up
  * and access every hardware feature.
  *
- * A "hardware feature" is supposed to be the minimal atomic execution
- * unit - a LED, a button, a sensor and so on. Most macros use the
- * following convention ("HWFN" being the "hardware feature name"):
+ * A "hardware feature" is supposed to be the minimal atomic hardware
+ * unit - a LED, a button, a sensor and so on, usually connected to a
+ * single MCU pin. Most macros use the following convention
+ * ("HWFN" being the "hardware feature name"):
  *
  * @li HWFN_PORT defines the port name to which the feature is
  *      connected (A, B, C etc).
@@ -37,8 +45,8 @@
  *      GPIO (HWFN)->BSRR = BITV (HWFN);
  *      // Get the port state
  *      if (GPIO (HWFN)->IDR & BITV (HWFN)) ...
- *      // Set up the GPIO mode
- *      GPIO (HWFN)->CRL = GPIO_SET (GPIO (HWFN)->CRL, HWFN, OUTPUT_50MHz, PUSHPULL);
+ *      // Set up the GPIO mode for the pin
+ *      *GPIO_CR (HWFN) = GPIO_SET (*GPIO_CR (HWFN), HWFN, OUTPUT_50MHz, PUSHPULL);
  * @endcode
  */
 

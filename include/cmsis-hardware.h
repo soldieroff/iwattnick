@@ -23,4 +23,9 @@
 #  define SYSCLK_FREQ_HSE	HSE_VALUE
 #endif
 
+// Define APB1 bus frequency
+//#define APB1_FREQ	24000000
+// Define APB2 bus frequency
+//#define APB2_FREQ	24000000
+
 #endif // __CMSIS_HARDWARE_H__
