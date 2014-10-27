@@ -1,10 +1,13 @@
 /*
- * CMSIS hardware-specific definitions
- * Copyright (C) 2014 by Andrew Zabolotny <zap@cobra.ru>
- *
- * Copy this file to cmsis-$(HARDWARE).h and
- * modify it to correctly specify the running environment.
- */
+    CMSIS hardware-specific definitions
+    Copyright (C) 2014 by Andrew Zabolotny All Rights Reserved
+
+    This code can be freely redistributed under the terms of
+    GNU Less General Public License version 3 or later.
+
+    Copy this file to cmsis-$(HARDWARE).h and modify it
+    to describe your hardware platform.
+*/
 
 #ifndef __CMSIS_HARDWARE_H__
 #define __CMSIS_HARDWARE_H__
@@ -23,6 +26,8 @@
 #  define SYSCLK_FREQ_HSE	HSE_VALUE
 #endif
 
+// Define AHB bus frequency
+//#define AHB_FREQ	24000000
 // Define APB1 bus frequency
 //#define APB1_FREQ	24000000
 // Define APB2 bus frequency

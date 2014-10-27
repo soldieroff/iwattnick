@@ -10,6 +10,11 @@
 // Инкрементируется 8 раз в секунду
 static volatile uint32_t clock;
 
+void SysTick_Handler ()
+{
+    clock++;
+}
+
 int main ()
 {
     // Отключаем JTAG, оставляем только SWD
@@ -79,9 +84,4 @@ int main ()
         // До следующего прерывания нам делать абсолютно нечего
         __WFI ();
     }
-}
-
-void SysTick_Handler ()
-{
-    clock++;
 }
