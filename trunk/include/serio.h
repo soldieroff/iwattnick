@@ -1,6 +1,6 @@
 /*
     Serial input/output simplified
-    Copyright (C) 2010 Andrew Zabolotny All Rights Reserved
+    Copyright (C) 2014 Andrew Zabolotny All Rights Reserved
 
     This code can be freely redistributed under the terms of
     GNU Less General Public License version 3 or later.
@@ -68,6 +68,8 @@ struct USART_TypeDef;
 
 /**
  * Initialize the serial transceiver.
+ * It is supposed that the GPIO themselves (clocking, mode, config,
+ * alternate mappings) are set up prioir to calling this function.
  * @arg usart
  *      A pointer to the USART register block to be initialized.
  * @arg bus_freq

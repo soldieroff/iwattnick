@@ -1,7 +1,10 @@
 /*
- * CMSIS hardware-specific definitions
- * Copyright (C) 2014 by Andrew Zabolotny <zap@cobra.ru>
- */
+    CMSIS hardware-specific definitions
+    Copyright (C) 2014 by Andrew Zabolotny All Rights Reserved
+
+    This code can be freely redistributed under the terms of
+    GNU Less General Public License version 3 or later.
+*/
 
 #ifndef __CMSIS_HARDWARE_H__
 #define __CMSIS_HARDWARE_H__
@@ -12,10 +15,5 @@
 #ifdef HSE_VALUE
 #define SYSCLK_FREQ_HSE		HSE_VALUE
 #endif
-
-// Define APB1 bus frequency
-#define APB1_FREQ	24000000
-// Define APB2 bus frequency
-#define APB2_FREQ	24000000
 
 #endif // __CMSIS_HARDWARE_H__

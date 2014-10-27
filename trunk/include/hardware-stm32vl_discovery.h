@@ -1,13 +1,26 @@
 /*
- * STM32VL-Discovery board hardware definition
- * Copyright (C) 2014 by Andrew Zabolotny <zapparello@ya.ru>
- */
+    STM32VL-Discovery board hardware definition
+    Copyright (C) 2014 by Andrew Zabolotny All Rights Reserved
+
+    This code can be freely redistributed under the terms of
+    GNU Less General Public License version 3 or later.
+*/
 
 #ifndef __HARDWARE_H__
 #define __HARDWARE_H__
 
 #include "macros.h"
 #include "stm32f10x.h"
+
+// Define AHB bus frequency
+#define AHB_FREQ	24000000
+// Define APB1 bus frequency
+#define APB1_FREQ	24000000
+// Define APB2 bus frequency
+#define APB2_FREQ	24000000
+
+// RTC crystal frequency, Hz
+#define RTC_FREQ	32768
 
 // A green LED on port PC9
 #define GLED_PORT		C

@@ -1,6 +1,9 @@
 /*
     Basic macros
-    Copyright (C) 2009 by Andrew Zabolotny <zap@cobra.ru>
+    Copyright (C) 2014 Andrew Zabolotny All Rights Reserved
+
+    This code can be freely redistributed under the terms of
+    GNU Less General Public License version 3 or later.
 */
 
 #ifndef __MACROS_H__
