@@ -21,33 +21,24 @@
     while (!(RTC->CRL & RTC_CRL_RSF)) \
         ;
 
-/// Wait until a write to RTC registers is possible, and enable writing
-static __inline__ uint8_t rtc_wait_write ()
+/**
+ * Wait until a write to RTC registers is possible, and enable writing.
+ * Use rtc_wait_write()/rtc_done_write() to mark the start and the end
+ * of a RTC registers write block.
+ */
+static __inline__ void rtc_wait_write ()
 {
     while (!(RTC->CRL & RTC_CRL_RTOFF))
         ;
     *(uint16_t *)&RTC->CRL |= RTC_CRL_CNF;
-
-    return 1;
 }
 
 /// Disable writing to RTC registers
-extern void rtc_done_write ();
-
-/**
- * This is an automatic RTC registers write enable/disable block header.
- * Use it like below:
- * @code
- * rtc_write () {
- *      // write RTC registers here ...
- *      rtc_set_counter (...);
- *      rtc_set_alarm (...);
- * }
- * @endcode
- */
-#define rtc_write() \
-    for (uint8_t __tmp __attribute__((__cleanup__(rtc_done_write))) = rtc_wait_write (); \
-        __tmp ; __tmp = 0)
+static __inline__ void rtc_done_write ()
+{
+    // Get rid of the 'volatile' attribute, gcc generates suboptimal code
+    *(uint16_t *)&RTC->CRL &= ~RTC_CRL_CNF;
+}
 
 /// Get the current RTC seconds counter
 static __inline__ uint32_t rtc_counter ()
