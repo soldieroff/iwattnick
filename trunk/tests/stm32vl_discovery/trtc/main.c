@@ -1,5 +1,9 @@
 #include "stm32vl_discovery.h"
 #include "rtc.h"
+#include "datetime.h"
+
+/// The base unixtime for RTC clock
+uint32_t rtc_basetime = 1414489182;
 
 static volatile uint32_t clock;
 
@@ -49,7 +53,16 @@ int main (void)
             }
 
             if ((old_clock & 15) == 0)
-                printf ("%d\r", rtc_counter ());
+            {
+                datetime_t dt;
+                uint32_t ut = rtc_counter ();
+                ut2dt (rtc_basetime + (ut >> 4), &dt);
+                printf ("(%d) %04d/%02d/%02d %02d:%02d:%02d.%d\r",
+                    ut,
+                    dt.year, dt.mon + 1, dt.day,
+                    dt.hour, dt.min, dt.sec,
+                    ((ut & 15) * 10) / 16);
+            }
         }
 
         // До следующего прерывания нам делать абсолютно нечего

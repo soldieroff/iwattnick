@@ -16,10 +16,11 @@ ARM-NONE-EABI-GCC.SFLAGS ?= -pipe -D__ASSEMBLY__ -D__ASSEMBLER__ \
 ARM-NONE-EABI-GCC.CFLAGS.DEF = $(CFLAGS.DEF) -ftrack-macro-expansion=0
 ARM-NONE-EABI-GCC.CFLAGS.INC = $(if $(DIR.INCLUDE.C),-I$(subst :, -I,$(DIR.INCLUDE.C)))
 
-ARM-NONE-EABI-GCC.CFLAGS.release ?= -g -Os \
+# You might want to use -Os instead of -O2, depending on your priorities
+ARM-NONE-EABI-GCC.CFLAGS.release ?= -g -O2 -fno-reorder-blocks \
     -fno-builtin -ffunction-sections -fdata-sections -fomit-frame-pointer -mabi=aapcs \
     -fno-unroll-loops -ffast-math -ftree-vectorize
-ARM-NONE-EABI-GCC.CFLAGS.debug ?= -g -D__DEBUG__ \
+ARM-NONE-EABI-GCC.CFLAGS.debug ?= -g -Og -D__DEBUG__ \
     -fno-builtin -ffunction-sections -fdata-sections -fomit-frame-pointer -mabi=aapcs \
     -fno-unroll-loops -ffast-math -ftree-vectorize
 

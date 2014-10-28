@@ -9,12 +9,6 @@
 #include HARDWARE_H
 #include "rtc.h"
 
-void rtc_done_write ()
-{
-    // Get rid of the 'volatile' attribute, gcc generates suboptimal code
-    *(uint16_t *)&RTC->CRL &= ~RTC_CRL_CNF;
-}
-
 void rtc_init ()
 {
     // Включим питание RTC
@@ -28,26 +22,33 @@ void rtc_init ()
     rtc_wait_sync ();
 
     // Если часы не в нужном режиме работы, делаем полный сброс и конфигурируем заново
-    if ((RCC->BDCR & (RCC_BDCR_LSEON | RCC_BDCR_RTCEN | RCC_BDCR_RTCSEL)) ==
+    if ((RCC->BDCR & (RCC_BDCR_LSEON | RCC_BDCR_RTCEN | RCC_BDCR_RTCSEL)) !=
         (RCC_BDCR_LSEON | RCC_BDCR_RTCEN | RCC_BDCR_RTCSEL_LSE))
-        return;
-
-    // Полностью сбросим часы и энергонезависимое хранилище
-    RCC->BDCR = RCC_BDCR_BDRST;
-    // Включим внешний кварц
-    RCC->BDCR = RCC_BDCR_LSEON;
-    // Ждём пока кварц заведётся (можно не ждать, но для порядка...)
-    while (!(RCC->BDCR & RCC_BDCR_LSERDY)) ;
-    // Запустим тактирование RTC от внешнего кварца
-    RCC->BDCR = RCC_BDCR_LSEON | RCC_BDCR_RTCEN | RCC_BDCR_RTCSEL_LSE;
-
-    // Начальная настройка RTC
-    rtc_write ()
     {
-        // We want 16 ticks per second
-        RTC->PRLH = (uint16_t)(((RTC_FREQ / RTC_TICKS_PER_SEC) - 1) >> 16);
-        RTC->PRLL = (uint16_t)((RTC_FREQ / RTC_TICKS_PER_SEC) - 1);
+        // Полностью сбросим часы и энергонезависимое хранилище
+        RCC->BDCR = RCC_BDCR_BDRST;
+        // Включим внешний кварц
+        RCC->BDCR = RCC_BDCR_LSEON;
+        // Ждём пока кварц заведётся (можно не ждать, но для порядка...)
+        while (!(RCC->BDCR & RCC_BDCR_LSERDY)) ;
+        // Запустим тактирование RTC от внешнего кварца
+        RCC->BDCR = RCC_BDCR_LSEON | RCC_BDCR_RTCEN | RCC_BDCR_RTCSEL_LSE;
+
+        // Начальная настройка RTC
+        rtc_wait_write ();
+        // Reset counter to 0
         rtc_set_counter (0);
+        // Reset alarm
         rtc_set_alarm (0xffffffff);
+
+        goto go;
     }
+
+    rtc_wait_write ();
+go:
+    // Set up RTC reload counter
+    RTC->PRLH = (uint16_t)(((RTC_FREQ / RTC_TICKS_PER_SEC) - 1) >> 16);
+    RTC->PRLL = (uint16_t)((RTC_FREQ / RTC_TICKS_PER_SEC) - 1);
+
+    rtc_done_write ();
 }
