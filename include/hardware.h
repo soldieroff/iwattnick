@@ -14,9 +14,9 @@
 
 /**
  * @file hardware.h
- * This is just a template for your board-specific header file.
- * It is supposed to include the MCU-specific header files, and also
- * declare the on-board hardware connections.
+ *      This is just a template for your board-specific header file.
+ *      It is supposed to include the MCU-specific header files, and also
+ *      declare the on-board hardware connections.
  */
 
 // This always comes for free

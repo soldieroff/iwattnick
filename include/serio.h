@@ -11,8 +11,8 @@
 
 /**
  * @file serio.h
- * This small library provides some functions for sending bytes out via
- * one of the USARTs available in the STM32 microcontrollers.
+ *      This small library provides some functions for sending bytes
+ *      via one of the USARTs available in the STM32 microcontrollers.
  */
 
 #ifdef __cplusplus

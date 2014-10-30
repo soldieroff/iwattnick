@@ -9,6 +9,12 @@
 #ifndef __RTC_H__
 #define __RTC_H__
 
+/**
+ * @file rtc.h
+ *      A small simple library that makes life easy when working
+ *      with STM32's Real-Time-Clock.
+ */
+
 /// How many RTC ticks per second we want (1 = 1 tick per second)
 #define RTC_TICKS_PER_SEC	16
 

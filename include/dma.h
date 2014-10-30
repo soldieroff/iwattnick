@@ -97,7 +97,7 @@ void JOIN5 (DMA, DMA_NUM (x), _Channel, DMA_CHAN (x), _IRQHandler) ()
  *      Number of copied elements
  */
 extern void dma_copy (DMA_TypeDef *dma, unsigned chan, uint32_t ccr,
-    const void *src, volatile void *dst, unsigned count);
+    void *src, void *dst, unsigned count);
 
 /**
  * This function is identical to @a dma_copy except that it works specifically with the
@@ -116,7 +116,7 @@ extern void dma_copy (DMA_TypeDef *dma, unsigned chan, uint32_t ccr,
  *      Number of copied elements
  */
 extern void dma1_copy (unsigned chan, uint32_t ccr,
-    const void *src, volatile void *dst, unsigned count);
+    void *src, void *dst, unsigned count);
 
 /**
  * This function is identical to @a dma_copy except that it works specifically with the
@@ -136,6 +136,6 @@ extern void dma1_copy (unsigned chan, uint32_t ccr,
  *      Number of copied elements
  */
 extern void dma2_copy (unsigned chan, uint32_t ccr,
-    const void *src, volatile void *dst, unsigned count);
+    void *src, void *dst, unsigned count);
 
 #endif // __DMA_H__
