@@ -16,8 +16,10 @@ See the GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
 
-----------------------------------------------------------------------
+/**
+@file printf.h
 
 This library is realy just two files: 'printf.h' and 'printf.c'.
 
@@ -52,16 +54,20 @@ many embedded systems.
 To use the printf you need to supply your own character output function, 
 something like :
 
+@code
 void putc ( void* p, char c)
 	{
 	while (!SERIAL_PORT_EMPTY) ;
 	SERIAL_PORT_TX_REGISTER = c;
 	}
+@endcode
 
 Before you can call printf you need to initialize it to use your 
 character output function with something like:
 
+@code
 init_printf(NULL,putc);
+@endcode
 
 Notice the 'NULL' in 'init_printf' and the parameter 'void* p' in 'putc', 
 the NULL (or any pointer) you pass into the 'init_printf' will eventually be 

@@ -10,6 +10,12 @@
 #define __NVIC_H__
 
 /**
+ * @file nvic.h
+ *      A set of routines to manipulate the Nested Vector
+ *      Interrupt Controller (NVIC).
+ */
+
+/**
  * Set up the interrupt controller to handle the given IRQ.
  * Note that this does not include first 16 faults, which have
  * a negative index. The faults work differently: they are

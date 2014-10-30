@@ -14,7 +14,7 @@ void
 #else
     dma_copy (DMA_TypeDef *_dma,
 #endif
-        unsigned chan, uint32_t ccr, const void *src, volatile void *dst, unsigned count)
+        unsigned chan, uint32_t ccr, void *src, void *dst, unsigned count)
 {
     // Unfortunately, these checks won't work in preprocessor because
     // PERIPH_BASE is not just a const like it is supposed to be.
@@ -48,7 +48,7 @@ void
             // memory -> device
             ccr |= DMA_CCR_DIR;
             // src must be the peripherial
-            XCHG (*(void **)&src, *(void **)&dst);
+            XCHG (src, dst);
         }
     else
         // device -> device impossible, so it is device -> memory

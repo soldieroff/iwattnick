@@ -8,6 +8,14 @@
 #ifndef __DATETIME_H__
 #define __DATETIME_H__
 
+/**
+ * @file datetime.h
+ *      This file contains some simple but effective functions for converting
+ *      Unix time (seconds since 1-1-1970) into human-readable format (year,
+ *      month, day and so on). Also there's the reverse function that can be
+ *      used to set the clock date/time.
+ */
+
 #include <stdint.h>
 
 typedef struct
