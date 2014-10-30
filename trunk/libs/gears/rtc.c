@@ -40,12 +40,10 @@ void rtc_init ()
         rtc_set_counter (0);
         // Reset alarm
         rtc_set_alarm (0xffffffff);
-
-        goto go;
     }
+    else
+        rtc_wait_write ();
 
-    rtc_wait_write ();
-go:
     // Set up RTC reload counter
     RTC->PRLH = (uint16_t)(((RTC_FREQ / RTC_TICKS_PER_SEC) - 1) >> 16);
     RTC->PRLL = (uint16_t)((RTC_FREQ / RTC_TICKS_PER_SEC) - 1);

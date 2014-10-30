@@ -4,6 +4,6 @@ FLASH.TARGETS += tstop
 IHEX.TARGETS += tstop
 
 TARGETS.tstop = tstop$E
-CFLAGS.tstop += -DUSE_STDPERIPH_DRIVER -Itests/stm32vl_discovery/tstop
-SRC.tstop$E = $(wildcard tests/stm32vl_discovery/tstop/*.c)
+CFLAGS.tstop += -DUSE_STDPERIPH_DRIVER -Itests/stm32vl_discovery/examples/tstop
+SRC.tstop$E = $(wildcard tests/stm32vl_discovery/examples/tstop/*.c)
 LIBS.tstop$E = hardware$L spld$L CMSIS$L

@@ -102,6 +102,9 @@ ifeq ($(findstring /$(MODE)/,/release/debug/),)
 $(error Incorrect value for the MODE variable: $(MODE))
 endif
 
+# makedep gets the __MAKEDEP__ definition for all platforms
+MDEPFLAGS += -D__MAKEDEP__
+
 # Include host-dependent definitions
 SUBMAKEFILES += $(wildcard $(DIR.TIBS)/host/$(HOST).mak)
 # Include target-dependent definitions

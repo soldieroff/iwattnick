@@ -54,6 +54,8 @@ int main (void)
 
             if ((old_clock & 15) == 0)
             {
+                GPIO (GLED)->BSRR = BITV (GLED);
+
                 datetime_t dt;
                 uint32_t ut = rtc_counter ();
                 ut2dt (rtc_basetime + (ut >> 4), &dt);
@@ -62,6 +64,8 @@ int main (void)
                     dt.year, dt.mon + 1, dt.day,
                     dt.hour, dt.min, dt.sec,
                     ((ut & 15) * 10) / 16);
+
+                GPIO (GLED)->BRR = BITV (GLED);
             }
         }
 

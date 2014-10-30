@@ -95,6 +95,9 @@ regs Kusti, 23.10.2004
 
 #include <stdarg.h>
 
+// Uncomment for long format support (%l)
+//#define PRINTF_LONG_SUPPORT
+
 void init_printf(void* putp,void (*putf) (void*,char));
 
 void tfp_printf(char *fmt, ...);

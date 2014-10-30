@@ -47,8 +47,14 @@ void serio_init (USART_TypeDef *usart, uint32_t bus_freq, uint32_t fmt)
     // Finally, set up the baud rate
     fmt &= USART_BAUD_MASK;
 
+#if 0
+#ifdef USART_CR1_OVER8
     // It looks like STM32F1 (undocumentedly) supports OVER8 mode,
-    // but we don't support such high bit rates anyway, meh...
+    // but we don't need such high bit rates anyway...
+    if (usart->CR1 & USART_CR1_OVER8)
+        bus_freq *= 2;
+#endif
+#endif
 
     // Won't check for zero baud rate, we aren't idiots, are we?
     usart->BRR = (bus_freq + fmt / 2) / fmt;

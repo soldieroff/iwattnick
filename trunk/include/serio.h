@@ -1,5 +1,5 @@
 /*
-    Serial input/output simplified
+    STM32 Serial input/output simplified
     Copyright (C) 2014 Andrew Zabolotny All Rights Reserved
 
     This code can be freely redistributed under the terms of
@@ -114,7 +114,8 @@ extern uint8_t serio_getc (USART_TypeDef *usart);
  * @return
  *      0 if there is no data in receive buffer
  */
-extern uint8_t serio_iready (USART_TypeDef *usart);
+static inline uint8_t serio_iready (USART_TypeDef *usart)
+{ return (usart->SR & USART_SR_RXNE) ? 1 : 0; }
 
 #ifdef __cplusplus
 }

@@ -15,8 +15,3 @@ uint8_t serio_getc (USART_TypeDef *usart)
         ;
     return usart->DR;
 }
-
-uint8_t serio_iready (USART_TypeDef *usart)
-{
-    return (usart->SR & USART_SR_RXNE) ? 1 : 0;
-}
