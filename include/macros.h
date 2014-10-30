@@ -9,20 +9,40 @@
 #ifndef __MACROS_H__
 #define __MACROS_H__
 
-#define _JOIN2(a, b)		a##b
+#define _JOIN2(a,b)		a##b
 /// Join two tokens together and interpret the result as a new token
-#define JOIN2(a, b)		_JOIN2(a, b)
+#define JOIN2(a,b)		_JOIN2(a, b)
+
 #define _JOIN3(a,b,c)		a##b##c
 /// Join three tokens together and interpret the result as a new token
-#define JOIN3(a, b, c)		_JOIN3(a,b,c)
+#define JOIN3(a,b,c)		_JOIN3(a,b,c)
+
+#define _JOIN4(a,b,c,d)		a##b##c##d
+/// Join three tokens together and interpret the result as a new token
+#define JOIN4(a,b,c,d)		_JOIN4(a,b,c,d)
+
+#define _JOIN5(a,b,c,d,e)	a##b##c##d##e
+/// Join three tokens together and interpret the result as a new token
+#define JOIN5(a,b,c,d,e)	_JOIN5(a,b,c,d,e)
 
 /// Get the number of elements in a static array
 #define ARRAY_LEN(x)		(sizeof (x) / sizeof (x [0]))
+
+/// Exchange two values of the same type
+#define XCHG(x, y)		{ typeof (x) __z = x; x = y; y = __z; }
 
 /// Return the port name (A, B, C etc) given hardware feature name
 #define PORT(x)			JOIN2(x, _PORT)
 /// Return the bit number (0, 1, 2 etc) given hardware feature name
 #define BIT(x)			JOIN2(x, _BIT)
+/// Return the DMA controller number (1, 2, ...) given hardware feature name
+#define DMA_NUM(x)		JOIN2(x, _DMA_NUM)
+/// Return the DMA channel number (1-7) given hardware feature name
+#define DMA_CHAN(x)		JOIN2(x, _DMA_CHAN)
+/// Return the IRQ number corresponding to this DMA channel
+#define DMA_IRQ(x)		JOIN5(DMA, DMA_NUM(x), _Channel, DMA_CHAN (x), _IRQn)
+/// Return the IRQ priority corresponding to this hardware feature
+#define IRQ_PRIO(x)		JOIN2(x, _IRQ_PRIO)
 
 /// Return the GPIO port (GPIOA, GPIOB etc) given feature name
 #define GPIO(x)			JOIN2(GPIO, PORT (x))

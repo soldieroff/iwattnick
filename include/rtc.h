@@ -1,5 +1,5 @@
 /*
-    Real-Time-Clock library
+    STM32 Real-Time-Clock library
     Copyright (C) 2014 Andrew Zabolotny All Rights Reserved
 
     This code can be freely redistributed under the terms of
@@ -26,19 +26,47 @@
  * Use rtc_wait_write()/rtc_done_write() to mark the start and the end
  * of a RTC registers write block.
  */
-static __inline__ void rtc_wait_write ()
+static __inline__ int rtc_wait_write ()
 {
     while (!(RTC->CRL & RTC_CRL_RTOFF))
         ;
     *(uint16_t *)&RTC->CRL |= RTC_CRL_CNF;
+
+    return 1;
 }
 
 /// Disable writing to RTC registers
-static __inline__ void rtc_done_write ()
+static __inline__ int rtc_done_write ()
 {
     // Get rid of the 'volatile' attribute, gcc generates suboptimal code
     *(uint16_t *)&RTC->CRL &= ~RTC_CRL_CNF;
+
+    return 0;
 }
+
+/**
+ * A nice wrapper around @a rtc_wait_write() / @a rtc_done_write ().
+ * Usage example:
+ * @code
+ *  RTC_WRITE
+ *  {
+ *      rtc_set_counter (0);
+ *      rtc_set_alarm (60);
+ *  }
+ * @endcode
+ * The above code is equivalent to:
+ * @code
+ *  rtc_wait_write ();
+ *  rtc_set_counter (0);
+ *  rtc_set_alarm (60);
+ *  rtc_done_write ();
+ * @endcode
+ * Please don't 'break' from inside the code block, as you'll leave
+ * without notifying RTC of the changed registers. Use 'continue' to
+ * jump right to the code after the block.
+ */
+#define RTC_WRITE \
+    for (int __tmp = rtc_wait_write (); __tmp; __tmp = rtc_done_write ())
 
 /// Get the current RTC seconds counter
 static __inline__ uint32_t rtc_counter ()

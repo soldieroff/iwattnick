@@ -41,9 +41,15 @@
  * ("HWFN" being the "hardware feature name"):
  *
  * @li HWFN_PORT defines the port name to which the feature is
- *      connected (A, B, C etc).
+ *      connected (A, B, C etc). Used by PORT(HWFN) macro.
  * @li HWFN_BIT defines the bit number to which the feature is
- *      connected (0, 1, 2 ...).
+ *      connected (0, 1, 2 ...). Used by BIT(HWFN) macro.
+ * @li HWFN_DMA_NUM defines the DMA controller number used for
+ *      the hardware feature Used by DMA_NUM(HWFN) macro.
+ * @li HWFN_DMA_CHAN defines the DMA channel number used for
+ *      the hardware feature. Used by DMA_CHAN(HWFN) macro.
+ * @li HWFN_IRQ_PRIO defines the IRQ priority corresponding to
+ *      this hardware feature. Used by IRQ_PRIO(HWFN) macro.
  *
  * You can later use these declarations like this, for example:
  * @code
@@ -53,6 +59,14 @@
  *      if (GPIO (HWFN)->IDR & BITV (HWFN)) ...
  *      // Set up the GPIO mode for the pin
  *      *GPIO_CR (HWFN) = GPIO_SET (*GPIO_CR (HWFN), HWFN, OUTPUT_50MHz, PUSHPULL);
+ *
+ *      // DMA stuff ... clear global interrupt flag for the channel
+ *      DMA->IFCR = DMA_IFCR (UART1_TX, CGIF);
+ *      // Set up the DMA config register for channel
+ *      DMAC (UART1_TX)->CCR = DMA_CCR (UART1_TX, MINC)
+ *
+ *      // Set up the DMA transmit complete IRQ ...
+ *      nvic_setup (DMA_IRQ (USART1_TX), IRQ_PRIO (USART1_TX_DMA));
  * @endcode
  */
 

@@ -40,6 +40,13 @@
 #define USART1_RX_PORT		A
 #define USART1_RX_BIT		10
 
+// USART1 DMA channels
+#define USART1_TX_DMA_NUM	1
+#define USART1_TX_DMA_CHAN	4
+#define USART1_TX_DMA_IRQ_PRIO	0
+#define USART1_RX_DMA_NUM	1
+#define USART1_RX_DMA_CHAN	5
+
 // That's all we have, folks!
 
 #endif // __HARDWARE_H__

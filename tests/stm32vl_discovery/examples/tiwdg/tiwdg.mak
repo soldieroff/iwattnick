@@ -4,6 +4,6 @@ FLASH.TARGETS += tiwdg
 IHEX.TARGETS += tiwdg
 
 TARGETS.tiwdg = tiwdg$E
-CFLAGS.tiwdg += -DUSE_STDPERIPH_DRIVER -Itests/stm32vl_discovery/tiwdg
-SRC.tiwdg$E = $(wildcard tests/stm32vl_discovery/tiwdg/*.c)
+CFLAGS.tiwdg += -DUSE_STDPERIPH_DRIVER -Itests/stm32vl_discovery/examples/tiwdg
+SRC.tiwdg$E = $(wildcard tests/stm32vl_discovery/examples/tiwdg/*.c)
 LIBS.tiwdg$E = hardware$L spld$L CMSIS$L

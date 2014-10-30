@@ -35,3 +35,12 @@ is licensed under MCD-ST Liberty SW License Agreement V2.
 You may obtain a copy of the License at:
 
     http://www.st.com/software_license_agreement_liberty_v2
+
+Date and time conversion routines in libs/gears/datetime.c are public domain code,
+taken from:
+
+    http://stackoverflow.com/questions/1274964/how-to-decompose-unix-time-in-c
+
+The tiny s/printf implementation is LGPL code:
+
+    Copyright (C) 2004 Kustaa Nyholm
