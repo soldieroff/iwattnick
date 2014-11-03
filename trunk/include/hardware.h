@@ -50,11 +50,15 @@
  *      the hardware feature. Used by DMA_CHAN(HWFN) macro.
  * @li HWFN_IRQ_PRIO defines the IRQ priority corresponding to
  *      this hardware feature. Used by IRQ_PRIO(HWFN) macro.
+ * @li HWFN_USART defines the index of the USART corresponding
+ *      to this hardware feature.
  *
  * You can later use these declarations like this, for example:
  * @code
  *      // Set the bit output in port
  *      GPIO (HWFN)->BSRR = BITV (HWFN);
+ *      // Same but simpler
+ *      GPIO_BSET (HWFN);
  *      // Get the port state
  *      if (GPIO (HWFN)->IDR & BITV (HWFN)) ...
  *      // Set up the GPIO mode for the pin

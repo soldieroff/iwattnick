@@ -7,9 +7,9 @@
 */
 
 #include HARDWARE_H
-#include "serio.h"
+#include "usart.h"
 
-void serio_putc (USART_TypeDef *usart, uint8_t c)
+void usart_putc (USART_TypeDef *usart, uint8_t c)
 {
     // Wait till transmission register empty
     while (!(usart->SR & USART_SR_TXE))

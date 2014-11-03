@@ -102,8 +102,8 @@ int main (void)
 
     for (;;)
     {
-        if (serio_iready (USART1))
-            switch (serio_getc (USART1))
+        if (usart_rx_ready (USART1))
+            switch (usart_getc (USART1))
             {
                 case 's':
                     do_test_send ();

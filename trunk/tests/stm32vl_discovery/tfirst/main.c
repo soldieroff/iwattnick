@@ -67,18 +67,18 @@ int main ()
                 // If pressed, light the blue LED
                 if (bst)
                 {
-                    BSET (BLED);
+                    GPIO_BSET (BLED);
                     speed = (speed + 1) & 3;
                 }
                 else
-                    BRESET (BLED);
+                    GPIO_BRESET (BLED);
             }
 
             counter++;
             if (counter & ((32/8) << speed))
-                BSET (GLED);
+                GPIO_BSET (GLED);
             else
-                BRESET (GLED);
+                GPIO_BRESET (GLED);
         }
 
         // До следующего прерывания нам делать абсолютно нечего

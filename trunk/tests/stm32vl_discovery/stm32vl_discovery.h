@@ -7,7 +7,7 @@
 #define __STM32VL_DISCOVERY_H__
 
 #include HARDWARE_H
-#include "serio.h"
+#include "usart.h"
 #include "printf.h"
 
 extern void usart1_init ();

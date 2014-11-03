@@ -7,9 +7,9 @@
 */
 
 #include HARDWARE_H
-#include "serio.h"
+#include "usart.h"
 
-void serio_init (USART_TypeDef *usart, uint32_t bus_freq, uint32_t fmt)
+void usart_init (USART_TypeDef *usart, uint32_t bus_freq, uint32_t fmt)
 {
     uint32_t tmp;
 

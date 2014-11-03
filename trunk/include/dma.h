@@ -44,31 +44,37 @@
 
 /**
  * Get a pointer to the DMA controller associated with given feature.
- * Example: DMA(UART1_TX) will expand into something like DMA1
+ * Example: DMA(USART1_TX) will expand into something like DMA1
  */
 #define DMA(x)			JOIN2 (DMA, DMA_NUM (x))
 
 /**
+ * Get a pointer to the DMA controller associated with given USART
+ * Example: DMA_USART(MBM) -> DMA1
+ */
+#define DMA_USART(x)		JOIN2 (DMA, JOIN (USART, JOIN2 (x, _USART), _DMA_NUM))
+
+/**
  * Get a pointer to DMA controller channel associated with given feature.
- * Example: DMAC(UART1_TX) will expand into something like DMA1_Channel4
+ * Example: DMAC(USART1_TX) will expand into something like DMA1_Channel4
  */
 #define DMAC(x)			JOIN4 (DMA, DMA_NUM (x), _Channel, DMA_CHAN (x))
 
 /**
  * DMA interrupt status flag (ISR global DMA register)
- * Example: DMA_ISR (UART1_TX, GIF) -> DMA_ISR_GIF4
+ * Example: DMA_ISR (USART1_TX, GIF) -> DMA_ISR_GIF4
  */
 #define DMA_ISR(x,f)		JOIN3 (DMA_ISR_, f, DMA_CHAN (x))
 
 /**
  * DMA interrupt status clear flag (IFCR global DMA register)
- * Example: DMA_IFCR (UART1_TX, CGIF) -> DMA_IFCR_CGIF4
+ * Example: DMA_IFCR (USART1_TX, CGIF) -> DMA_IFCR_CGIF4
  */
 #define DMA_IFCR(x,f)		JOIN3 (DMA_IFCR_, f, DMA_CHAN (x))
 
 /**
  * DMA channel configuration flag (DMA_CCR)
- * Example: DMA_CCR (UART1_TX, MEM2MEM) -> DMA_CCR4_MEM2MEM
+ * Example: DMA_CCR (USART1_TX, MEM2MEM) -> DMA_CCR4_MEM2MEM
  */
 #define DMA_CCR(x,f)		JOIN4 (DMA_CCR, DMA_CHAN(x), _, f)
 
