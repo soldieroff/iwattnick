@@ -44,12 +44,15 @@
  *      connected (A, B, C etc). Used by PORT(HWFN) macro.
  * @li HWFN_BIT defines the bit number to which the feature is
  *      connected (0, 1, 2 ...). Used by BIT(HWFN) macro.
+ * @li HWFN_IRQ_PRIO defines the IRQ priority corresponding to
+ *      this hardware feature. Used by IRQ_PRIO(HWFN) macro.
  * @li HWFN_DMA_NUM defines the DMA controller number used for
  *      the hardware feature Used by DMA_NUM(HWFN) macro.
  * @li HWFN_DMA_CHAN defines the DMA channel number used for
  *      the hardware feature. Used by DMA_CHAN(HWFN) macro.
- * @li HWFN_IRQ_PRIO defines the IRQ priority corresponding to
- *      this hardware feature. Used by IRQ_PRIO(HWFN) macro.
+ * @li HWFN_DMA_IRQ_PRIO defines the IRQ priority corresponding to
+ *      the DMA channel associated with this hardware feature.
+ *      Used by DMA_IRQ_PRIO(HWFN) macro.
  * @li HWFN_USART defines the index of the USART corresponding
  *      to this hardware feature.
  *

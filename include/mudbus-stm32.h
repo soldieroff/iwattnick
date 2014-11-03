@@ -17,17 +17,13 @@
 
 // MudBus Master USART TX hardware feature
 #define MBM_USART_TX		JOIN3 (USART, MBM_USART, _TX)
-#define MBM_USART_TX_DMA	JOIN3 (USART, MBM_USART, _TX_DMA)
 // MudBus Master USART RX hardware feature
 #define MBM_USART_RX		JOIN3 (USART, MBM_USART, _RX)
-#define MBM_USART_RX_DMA	JOIN3 (USART, MBM_USART, _RX_DMA)
 
 // MudBus Slave USART TX hardware feature
 #define MBS_USART_TX		JOIN3 (USART, MBS_USART, _TX)
-#define MBS_USART_TX_DMA	JOIN3 (USART, MBS_USART, _TX_DMA)
 // MudBus Slave USART RX hardware feature
 #define MBS_USART_RX		JOIN3 (USART, MBS_USART, _RX)
-#define MBS_USART_RX_DMA	JOIN3 (USART, MBS_USART, _RX_DMA)
 
 /// Platform-specific structure that represents the USART
 typedef USART_TypeDef mudbus_usart_t;

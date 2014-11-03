@@ -47,3 +47,19 @@ void led_init ()
     *GPIO_CR (USRBUT) = GPIO_SET (*GPIO_CR (USRBUT),
         USRBUT, INPUT, FLOATING);
 }
+
+// Инкрементируется 32 раза в секунду
+volatile uint32_t clock;
+
+void SysTick_Handler ()
+{
+    clock++;
+}
+
+void clock_init ()
+{
+    // Настроим системный таймер на CLOCKS_PER_SEC прерываний в секунду
+    if (SysTick_Config (SystemCoreClock / CLOCKS_PER_SEC))
+        /* Capture error */
+        for (;;) ;
+}

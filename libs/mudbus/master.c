@@ -55,8 +55,8 @@ static void mbm_send_next ()
         {
             // will send CRC8
             mbm.flags |= MBMF_CRC8;
-            USART (MBM)->DR = mbm.crc8;
-            return;
+            data = (uint8_t *)&mbm.crc;
+            len = 1;
         }
         else if (!(mbm.flags & MBMF_SPACE))
         {
@@ -70,9 +70,15 @@ static void mbm_send_next ()
             data = (uint8_t *)&mbm;
             len = 4;
         }
+        else
+            // all done
+            return;
     }
     else
     {
+        mbm.flags &= ~(MBMF_CRC8 | MBMF_SPACE);
+        mbm_usart_tx_mute (false);
+
         data = mbm.queue_data [mbm.queue_tail];
         len = mbm.queue_len [mbm.queue_tail];
 

@@ -7,7 +7,7 @@
 
 #include HARDWARE_H
 
-// Инкрементируется 8 раз в секунду
+// Инкрементируется 32 раз в секунду
 static volatile uint32_t clock;
 
 void SysTick_Handler ()

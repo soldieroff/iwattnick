@@ -28,7 +28,7 @@
 
 void mbm_usart_init ()
 {
-    // Enable clocking GPIO, USART and alternative functions AFIO
+    // Enable clocking GPIO, USART and AFIO
     RCC->APB2ENR |= RCC_APB2ENR_AFIOEN | MBM_APB2ENR_BITS_1 | MBM_APB2ENR_BITS_2;
     RCC->APB1ENR |= MBM_APB1ENR_BITS_2;
 
