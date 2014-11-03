@@ -59,14 +59,16 @@ typedef enum { false = 0, true = !false } bool;
 #define PORT(x)			JOIN2(x, _PORT)
 /// Return the bit number (0, 1, 2 etc) given hardware feature name
 #define BIT(x)			JOIN2(x, _BIT)
+/// Return the IRQ priority corresponding to this hardware feature
+#define IRQ_PRIO(x)		JOIN2(x, _IRQ_PRIO)
 /// Return the DMA controller number (1, 2, ...) given hardware feature name
 #define DMA_NUM(x)		JOIN2(x, _DMA_NUM)
 /// Return the DMA channel number (1-7) given hardware feature name
 #define DMA_CHAN(x)		JOIN2(x, _DMA_CHAN)
 /// Return the IRQ number corresponding to this DMA channel
 #define DMA_IRQ(x)		JOIN5(DMA, DMA_NUM(x), _Channel, DMA_CHAN (x), _IRQn)
-/// Return the IRQ priority corresponding to this hardware feature
-#define IRQ_PRIO(x)		JOIN2(x, _IRQ_PRIO)
+/// Return the DMA IRQ priority corresponding to this hardware feature
+#define DMA_IRQ_PRIO(x)		JOIN2(x, _DMA_IRQ_PRIO)
 /// Return the USART instance corresponding to a hardware feature (e.g. USART(DEBUG) -> USART3)
 #define USART(x)		JOIN2 (USART, JOIN2(x, _USART))
 
@@ -179,7 +181,7 @@ typedef enum { false = 0, true = !false } bool;
 #define GPIO_CR(b)		((BIT(b) < 8) ? &GPIO(b)->CRL : &GPIO(b)->CRH)
 
 /// Atomic set of a single bit in port
-#define GPIO_BSET(x)			(GPIO(x)->BSRR |= BITV (x))
+#define GPIO_BSET(x)		(GPIO(x)->BSRR |= BITV (x))
 
 /// Atomic clear of a single bit in port
 #define GPIO_BRESET(x)		(GPIO(x)->BRR |= BITV (x))
