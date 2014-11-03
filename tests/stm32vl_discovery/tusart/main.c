@@ -12,6 +12,44 @@ void SysTick_Handler(void)
     clock++;
 }
 
+static void do_test_xsend ()
+{
+    for (;;)
+    {
+        if (usart_rx_ready (USART1))
+            switch (usart_getc (USART1))
+            {
+                case 'q':
+                    return;
+
+                default:
+                    puts ("\r\nq: Quit test");
+                    break;
+            }
+
+        puts ("\r\nSending 1000 visible characters ...");
+        for (unsigned i = 0; i < 1000; i++)
+            putc ('.');
+
+        puts ("\r\nNow sending 1000 visible characters with TX off...");
+
+        // Переводим вывод USART1_TX в режим плавающего входа
+        *GPIO_CR (USART1_TX) = GPIO_SET (*GPIO_CR (USART1_TX),
+            USART1_TX, INPUT, FLOATING);
+
+        for (unsigned i = 0; i < 1000; i++)
+            putc ('@');
+
+        // Подождём пока данные уйдут из выходного FIFO и DR.
+        while (!usart_tx_complete (USART1))
+            ;
+
+        // Возвращаем USART1_TX в режим AF push/pull
+        *GPIO_CR (USART1_TX) = GPIO_SET (*GPIO_CR (USART1_TX),
+            USART1_TX, OUTPUT_2MHz, AF_PUSHPULL);
+    }
+}
+
 int main (void)
 {
     // Отключаем JTAG, оставляем только SWD
@@ -20,7 +58,7 @@ int main (void)
 
     // Инициализируем USART1
     usart1_init ();
-    printf ("USART library demo running\r\n");
+    puts ("USART library demo running");
 
     led_init ();
 
@@ -35,11 +73,17 @@ int main (void)
     uint32_t old_bst = 0;
     for (;;)
     {
-        if (serio_iready (USART1))
-        {
-            char c = serio_getc (USART1);
-            printf ("[got '%c']", c);
-        }
+        if (usart_rx_ready (USART1))
+            switch (usart_getc (USART1))
+            {
+                case 'x':
+                    do_test_xsend ();
+                    break;
+
+                default:
+                    puts ("\r\nx: Test transmitter with output disabled");
+                    break;
+            }
 
         if (old_clock != clock)
         {

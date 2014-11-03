@@ -23,6 +23,12 @@
 /// Get the number of elements in a static array
 #define ARRAY_LEN(x)		(sizeof (x) / sizeof (x [0]))
 
+/// Structure attribute to avoid aligning structure members
+#define PACKED			__attribute__ ((packed))
+
+/// Get the offset of member m in compound type t
+#define OFFSETOF(t, m)		__builtin_offsetof (t, m)
+
 /// Exchange two values of the same type
 #define XCHG(x, y)		{ typeof (x) __z = x; x = y; y = __z; }
 
@@ -61,6 +67,8 @@ typedef enum { false = 0, true = !false } bool;
 #define DMA_IRQ(x)		JOIN5(DMA, DMA_NUM(x), _Channel, DMA_CHAN (x), _IRQn)
 /// Return the IRQ priority corresponding to this hardware feature
 #define IRQ_PRIO(x)		JOIN2(x, _IRQ_PRIO)
+/// Return the USART instance corresponding to a hardware feature (e.g. USART(DEBUG) -> USART3)
+#define USART(x)		JOIN2 (USART, JOIN2(x, _USART))
 
 /// Return the GPIO port (GPIOA, GPIOB etc) given feature name
 #define GPIO(x)			JOIN2(GPIO, PORT (x))
@@ -70,25 +78,28 @@ typedef enum { false = 0, true = !false } bool;
 /// Return the bit value of a port bit by name
 #define BITV(x)			BV(BIT(x))
 
-#define __PORT_CMP_A		99990
-#define __PORT_CMP_B		99991
-#define __PORT_CMP_C		99992
-#define __PORT_CMP_D		99993
-#define __PORT_CMP_E		99994
-#define __PORT_CMP_F		99995
-#define __PORT_CMP_G		99996
+#define __CMP_PORTA		99990
+#define __CMP_PORTB		99991
+#define __CMP_PORTC		99992
+#define __CMP_PORTD		99993
+#define __CMP_PORTE		99994
+#define __CMP_PORTF		99995
+#define __CMP_PORTG		99996
+
+#define __CMP_USART1		99980
+#define __CMP_USART2		99981
+#define __CMP_USART3		99982
+#define __CMP_USART4		99983
+#define __CMP_USART5		99984
 
 /// Preprocessor: compare the port of hw feature x with port name p
-#define PORT_CMP(x, p)		(JOIN2(__PORT_CMP_, PORT(x)) == JOIN2(__PORT_CMP_, p))
-/// Preprocessor: compare the port of hw feature x with port of hw feature p
-#define PORTS_CMP(x, p)		(JOIN2(__PORT_CMP_, PORT(x)) == JOIN2(__PORT_CMP_, PORT(p)))
+#define PORT_CMP(x, p)		(JOIN2(__CMP_PORT, PORT(x)) == JOIN2(__CMP_PORT, p))
 /// Preprocessor: compare the port and bit of hw feature x with port p and bit b
 #define PORTBIT_CMP(x, p, b)	(PORT_CMP(x, p) && (BIT(x) == b))
-
-/// Atomic set of a single bit in port
-#define BSET(x)			(GPIO(x)->BSRR |= BITV (x))
-/// Atomic clear of a single bit in port
-#define BRESET(x)		(GPIO(x)->BRR |= BITV (x))
+/// Preprocessor: compare the port of hw feature x with port of hw feature p
+#define PORTS_CMP(x, p)		(JOIN2(__CMP_PORT, PORT(x)) == JOIN2(__CMP_PORT, PORT(p)))
+/// Check if the USART of a hw feature is same as expected (p = 1, 2 etc)
+#define USART_CMP(x,p)		(JOIN2 (__CMP_USART, JOIN2 (x, _USART)) == JOIN2(__CMP_USART, p))
 
 // ----- // GPIO configuration bits (undefined for some reason by stmxxxx.h) // ----- //
 
@@ -166,5 +177,11 @@ typedef enum { false = 0, true = !false } bool;
  *      hw feature bit name
  */
 #define GPIO_CR(b)		((BIT(b) < 8) ? &GPIO(b)->CRL : &GPIO(b)->CRH)
+
+/// Atomic set of a single bit in port
+#define GPIO_BSET(x)			(GPIO(x)->BSRR |= BITV (x))
+
+/// Atomic clear of a single bit in port
+#define GPIO_BRESET(x)		(GPIO(x)->BRR |= BITV (x))
 
 #endif /* __MACROS_H__ */

@@ -226,3 +226,16 @@ void tfp_sprintf(char* s,char *fmt, ...)
     putcp(&s,0);
     va_end(va);
 }
+
+void tfp_putc (char c)
+{
+    stdout_putf (stdout_putp, c);
+}
+
+void tfp_puts (const char *s)
+{
+    while (*s)
+        putc (*s++);
+    putc ('\r');
+    putc ('\n');
+}

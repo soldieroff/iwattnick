@@ -34,6 +34,16 @@
 #define USRBUT_PORT		A
 #define USRBUT_BIT		0
 
+// Define the USART to use with MudBus in master mode
+#define MBM_USART		1
+// Define the USART to use with MudBus in slave mode
+#define MBS_USART		2
+
+// Serial port setup for MudBus Master
+#define MBM_USART_SETUP		(9600 | USART_CHARBITS_8 | USART_PARITY_NONE | USART_STOPBITS_1)
+// Serial port setup for MudBus Slave
+#define MBS_USART_SETUP		MBM_USART_SETUP
+
 // USART1 I/O ports
 #define USART1_TX_PORT		A
 #define USART1_TX_BIT		9
@@ -47,6 +57,20 @@
 #define USART1_RX_DMA_NUM	1
 #define USART1_RX_DMA_CHAN	5
 #define USART1_RX_DMA_IRQ_PRIO	0
+
+// USART2 I/O ports
+#define USART2_TX_PORT		A
+#define USART2_TX_BIT		2
+#define USART2_RX_PORT		A
+#define USART2_RX_BIT		3
+
+// USART2 DMA channels
+#define USART2_TX_DMA_NUM	1
+#define USART2_TX_DMA_CHAN	7
+#define USART2_TX_DMA_IRQ_PRIO	0
+#define USART2_RX_DMA_NUM	1
+#define USART2_RX_DMA_CHAN	6
+#define USART2_RX_DMA_IRQ_PRIO	0
 
 // That's all we have, folks!
 

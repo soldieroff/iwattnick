@@ -3,6 +3,7 @@
 include tibs/extra/stm32-defs.mak
 
 # Определим тип процессора для нашей аппаратной платформы, а также тип ядра процессора
+MCU = stm32
 CPU = $(STM32.HW2CPU.$(HARDWARE))
 CORE = $(word 1,$(STM32.CPUDEF.$(CPU)))
 
@@ -46,5 +47,5 @@ MATH.cortex-m3 = ARM_MATH_CM3
 MATH.cortex-m4 = ARM_MATH_CM4
 
 # Расскажем о типе процессора программе
-CFLAGS.DEF += -DCPU_$(call asciiup,$(CPU)) -DCORE_$(call asciiup,$(subst -,_,$(CORE))) \
+CFLAGS.DEF += -DMCU_$(MCU) -DCPU_$(call asciiup,$(CPU)) -DCORE_$(call asciiup,$(subst -,_,$(CORE))) \
     -D$(CPUFAM) -D$(MATH.$(CORE))

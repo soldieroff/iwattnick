@@ -111,7 +111,12 @@ void tfp_sprintf(char* s,char *fmt, ...);
 
 void tfp_format(void* putp,void (*putf) (void*,char),char *fmt, va_list va);
 
+void tfp_putc (char c);
+void tfp_puts (const char *s);
+
 #define printf tfp_printf 
 #define sprintf tfp_sprintf 
+#define putc tfp_putc
+#define puts tfp_puts
 
 #endif

@@ -1,16 +1,16 @@
 /*
-    STM32 Serial input/output simplified
+    STM32 Universal Serial Asynchronous Receiver/Transmitter simplified
     Copyright (C) 2014 Andrew Zabolotny All Rights Reserved
 
     This code can be freely redistributed under the terms of
     GNU Less General Public License version 3 or later.
 */
 
-#ifndef __SERIO_H__
-#define __SERIO_H__
+#ifndef __USART_H__
+#define __USART_H__
 
 /**
- * @file serio.h
+ * @file usart.h
  *      This small library provides some functions for sending bytes
  *      via one of the USARTs available in the STM32 microcontrollers.
  */
@@ -64,8 +64,6 @@ extern "C" {
 /// The mask to separate baud rate bits from format
 #define USART_BAUD_MASK		0x000FFFFF	// up to 1048575 baud
 
-struct USART_TypeDef;
-
 /**
  * Initialize the serial transceiver.
  * It is supposed that the GPIO themselves (clocking, mode, config,
@@ -78,7 +76,7 @@ struct USART_TypeDef;
  *      A combination of USART_XXX bits defined above to define
  *      the baud rate and data format.
  */
-extern void serio_init (USART_TypeDef *usart, uint32_t bus_freq, uint32_t fmt);
+extern void usart_init (USART_TypeDef *usart, uint32_t bus_freq, uint32_t fmt);
 
 /**
  * Redirect standard C functions like printf(), puts() and so on
@@ -95,7 +93,7 @@ extern void stdio_init (USART_TypeDef *usart);
  * @arg c
  *      The character to send
  */
-extern void serio_putc (USART_TypeDef *usart, uint8_t c);
+extern void usart_putc (USART_TypeDef *usart, uint8_t c);
 
 /**
  * Receive a single byte through the serial port.
@@ -105,20 +103,31 @@ extern void serio_putc (USART_TypeDef *usart, uint8_t c);
  * @return
  *      The character read from the USART
  */
-extern uint8_t serio_getc (USART_TypeDef *usart);
+extern uint8_t usart_getc (USART_TypeDef *usart);
 
 /**
  * Check if input is ready to be read from the port.
  * @arg usart
  *      The USART to check data readiness in
  * @return
- *      0 if there is no data in receive buffer
+ *      true if there is data in the receive buffer
  */
-static inline uint8_t serio_iready (USART_TypeDef *usart)
-{ return (usart->SR & USART_SR_RXNE) ? 1 : 0; }
+static inline bool usart_rx_ready (USART_TypeDef *usart)
+{ return (usart->SR & USART_SR_RXNE) != 0; }
+
+/**
+ * Check if transmission is complete (both bytes in outgoing FIFO and
+ * data register).
+ * @arg usart
+ *      The USART to check
+ * @return
+ *      true if transmission is complete
+ */
+static inline bool usart_tx_complete (USART_TypeDef *usart)
+{ return (usart->SR & USART_SR_TC) != 0; }
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // __SERIO_H__
+#endif // __USART_H__

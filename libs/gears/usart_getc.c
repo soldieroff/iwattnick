@@ -7,9 +7,9 @@
 */
 
 #include HARDWARE_H
-#include "serio.h"
+#include "usart.h"
 
-uint8_t serio_getc (USART_TypeDef *usart)
+uint8_t usart_getc (USART_TypeDef *usart)
 {
     while (!(usart->SR & USART_SR_RXNE))
         ;

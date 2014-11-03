@@ -7,10 +7,10 @@
 */
 
 #include HARDWARE_H
-#include "serio.h"
+#include "usart.h"
 #include "printf.h"
 
 void stdio_init (USART_TypeDef *usart)
 {
-    init_printf (usart, (void (*) (void*,char)) serio_putc);
+    init_printf (usart, (void (*) (void*,char)) usart_putc);
 }

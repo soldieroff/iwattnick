@@ -19,7 +19,7 @@ void usart1_init ()
         USART1_RX, INPUT, FLOATING);
 
     // USART1 is on APB2
-    serio_init (USART1, APB2_FREQ,
+    usart_init (USART1, APB2_FREQ,
         9600 | USART_CHARBITS_8 | USART_PARITY_NONE | USART_STOPBITS_1);
 
     // Включаем printf() через USART1
