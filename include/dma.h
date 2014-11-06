@@ -144,4 +144,27 @@ extern void dma1_copy (unsigned chan, uint32_t ccr,
 extern void dma2_copy (unsigned chan, uint32_t ccr,
     void *src, void *dst, unsigned count);
 
+/**
+ * Stop the DMA channel.
+ * @arg dma
+ *      The DMA controller to stop (DMA1, DMA2, ...)
+ * @arg chan
+ *      DMA channel number (counting from 1)
+ */
+extern void dma_stop (DMA_TypeDef *dma, unsigned chan);
+
+/**
+ * Stop the DMA1 channel.
+ * @arg chan
+ *      DMA channel number (counting from 1)
+ */
+extern void dma1_stop (unsigned chan);
+
+/**
+ * Stop the DMA2 channel.
+ * @arg chan
+ *      DMA channel number (counting from 1)
+ */
+extern void dma2_stop (unsigned chan);
+
 #endif // __DMA_H__
