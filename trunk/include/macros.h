@@ -121,23 +121,23 @@ typedef enum { false = 0, true = !false } bool;
 /// Analog mode
 #define GPIO_CNF_ANALOG		0
 /// Floating input (reset state)
-#define GPIO_CNF_FLOATING	1
+#define GPIO_CNF_FLOATING	4
 /// Input with pull-up / pull-down
-#define GPIO_CNF_PUD		2
+#define GPIO_CNF_PUD		8
 
 // In output mode (MODE[1:0] > 00)
 
 /// General purpose output push-pull
 #define GPIO_CNF_PUSHPULL	0
 /// General purpose output Open-drain
-#define GPIO_CNF_OPENDRAIN	1
+#define GPIO_CNF_OPENDRAIN	4
 /// Alternate function output Push-pull
-#define GPIO_CNF_AF_PUSHPULL	2
+#define GPIO_CNF_AF_PUSHPULL	8
 /// Alternate function output Open-drain
-#define GPIO_CNF_AF_OPENDRAIN	3
+#define GPIO_CNF_AF_OPENDRAIN	12
 
 /// Just the bitmask for all bits
-#define GPIO_CNF_MASK		3
+#define GPIO_CNF_MASK		12
 
 /**
  * Return the bits for mode m & config c for GPIO bit b.
@@ -152,8 +152,8 @@ typedef enum { false = 0, true = !false } bool;
  * @arg c
  *      Port configuration (without GPIO_CNF_ prefix)
  */
-#define GPIO_CNFMODE(b,m,c)	(JOIN2 (GPIO_CNF_, c) << ((BIT(b) & 7) * 4 + 2) | \
-                        	 JOIN2 (GPIO_MODE_, m) << ((BIT(b) & 7) * 4))
+#define GPIO_CNFMODE(b,m,c)	(JOIN2 (GPIO_CNF_, c) << ((BIT(b) & 7) * 4) | \
+				 JOIN2 (GPIO_MODE_, m) << ((BIT(b) & 7) * 4))
 
 /**
  * Drop given bits in old GPIO CRL/CRH and set according to new mode & config.

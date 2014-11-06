@@ -10,11 +10,10 @@
 #include "gears.h"
 #include "mudbus.h"
 
-#define mbm_dma_copy		JOIN3 (dma, DMA_NUM (MBM_USART), _copy)
+#if 0
 
-mudbus_master_t mbm;
-
-uint8_t mb_crc8_update (uint8_t crc8, uint8_t c)
+// Substantialy slower but 24 bytes smaller
+static inline uint8_t mb_crc8_update (uint8_t crc8, uint8_t c)
 {
     crc8 ^= c;
 
@@ -24,7 +23,27 @@ uint8_t mb_crc8_update (uint8_t crc8, uint8_t c)
     return crc8;
 }
 
-uint8_t mb_crc8 (uint8_t *data, uint8_t len)
+#else
+
+static const uint8_t crc8tab [16] =
+{
+    0x00, 0x31, 0x62, 0x53, 0xc4, 0xf5, 0xa6, 0x97,
+    0xb9, 0x88, 0xdb, 0xea, 0x7d, 0x4c, 0x1f, 0x2e
+};
+
+static inline uint8_t mb_crc8_update (uint8_t crc8, uint8_t c)
+{
+    crc8 ^= c;
+
+    crc8 = (crc8 << 4) ^ crc8tab [(crc8 >> 4) & 15];
+    crc8 = (crc8 << 4) ^ crc8tab [(crc8 >> 4) & 15];
+
+    return crc8;
+}
+
+#endif
+
+uint8_t mb_crc8 (uint8_t *data, int len)
 {
     uint8_t crc8 = MB_CRC8_INIT;
     while (len--)
@@ -32,88 +51,106 @@ uint8_t mb_crc8 (uint8_t *data, uint8_t len)
     return crc8;
 }
 
-void mbm_init ()
+void mbm_init (mudbus_t *mb)
 {
-    memset (&mbm, 0, sizeof (mbm));
+    memset (mb, 0, sizeof (mudbus_t));
 
-    mbm.flags = MBMF_EMPTYQ;
+    mb->flags = MBMF_EMPTYQ;
+    mbd_master_init (&mb->driver);
 }
 
 /// Kick DMA to send next fragment
-static void mbm_send_next ()
+void mb_send_next (mudbus_t *mb)
 {
     const uint8_t *data;
     uint8_t len;
 
     // If transmitter is still busy, will do it later
-    if (!(USART (MBM)->SR & USART_SR_TXE))
+    if (mbd_tx_busy (&mb->driver))
         return;
 
-    if (mbm.flags & MBMF_EMPTYQ)
+    if (mb->flags & MBMF_TAILSENT)
     {
-        if (!(mbm.flags & MBMF_CRC8))
+        // Advance queue tail
+        mb->queue_tail = (mb->queue_tail + 1) & (MBM_QUEUE_SIZE - 1);
+        if (mb->queue_tail == mb->queue_head)
+            mb->flags |= MBMF_EMPTYQ;
+        mb->flags &= ~MBMF_TAILSENT;
+    }
+
+    if (mb->flags & MBMF_EMPTYQ)
+    {
+        if (!(mb->flags & MBMF_CRC8))
         {
             // will send CRC8
-            mbm.flags |= MBMF_CRC8;
-            data = (uint8_t *)&mbm.crc;
+            mb->flags |= MBMF_CRC8;
+            data = (uint8_t *)&mb->crc8;
             len = 1;
         }
-        else if (!(mbm.flags & MBMF_SPACE))
+        else if (!(mb->flags & MBMF_SPACE))
         {
             // will send a 4-char space
-            mbm.flags |= MBMF_SPACE;
+            mb->flags |= MBMF_SPACE;
 
             // mute TX
-            mbm_usart_tx_mute (true);
+            mbd_tx_mute (&mb->driver, true);
 
             // Send any 4 bytes
-            data = (uint8_t *)&mbm;
+            data = (uint8_t *)mb;
             len = 4;
         }
         else
+        {
             // all done
+            mb->flags &= ~(MBMF_CRC8 | MBMF_SPACE);
             return;
+        }
     }
     else
     {
-        mbm.flags &= ~(MBMF_CRC8 | MBMF_SPACE);
-        mbm_usart_tx_mute (false);
+        mbd_tx_mute (&mb->driver, false);
 
-        data = mbm.queue_data [mbm.queue_tail];
-        len = mbm.queue_len [mbm.queue_tail];
+        data = mb->queue_data [mb->queue_tail];
+        len = mb->queue_len [mb->queue_tail];
 
-        // Advance queue tail
-        mbm.queue_tail = (mbm.queue_tail + 1) & (MBM_QUEUE_SIZE - 1);
-
-        if (mbm.queue_tail == mbm.queue_head)
-            mbm.flags |= MBMF_EMPTYQ;
+        mb->flags |= MBMF_TAILSENT;
     }
 
-    (void)data;
-    (void)len;
+    mbd_tx_start (&mb->driver, data, len);
 }
 
-bool mbm_send (const uint8_t *data, uint8_t len)
+void mb_send_stop (mudbus_t *mb)
 {
+    mbd_tx_stop (&mb->driver);
+    mb->queue_tail = mb->queue_head;
+    mb->flags = MBMF_EMPTYQ;
+}
+
+bool mb_send (mudbus_t *mb, const uint8_t *data, uint8_t len)
+{
+    // If still sending CRC8 and space of previous packet, we're busy
+    if (mb->flags & (MBMF_CRC8 | MBMF_SPACE))
+        return false;
+
     // If this is the first fragment, initialize CRC8
-    if (mbm.flags & MBMF_EMPTYQ)
-        mbm.crc8 = MB_CRC8_INIT;
-    else if (mbm.queue_head == mbm.queue_tail)
+    if (mb->flags & MBMF_EMPTYQ)
+        mb->crc8 = MB_CRC8_INIT;
+    else if (mb->queue_head == mb->queue_tail)
         return false; // no space in queue
 
     // Store the fragment in the queue
-    mbm.queue_data [mbm.queue_head] = data;
-    mbm.queue_len [mbm.queue_head] = len;
+    mb->queue_data [mb->queue_head] = data;
+    mb->queue_len [mb->queue_head] = len;
 
     // Advance queue head
-    mbm.flags &= ~MBMF_EMPTYQ;
-    mbm.queue_head = (mbm.queue_head + 1) & (MBM_QUEUE_SIZE - 1);
+    mb->flags &= ~MBMF_EMPTYQ;
+    mb->queue_head = (mb->queue_head + 1) & (MBM_QUEUE_SIZE - 1);
 
     // update CRC8
     while (len--)
-        mbm.crc8 = mb_crc8_update (mbm.crc8, *data++);
+        mb->crc8 = mb_crc8_update (mb->crc8, *data++);
 
-    mbm_send_next ();
+    mb_send_next (mb);
 
     return true;
 }

@@ -36,7 +36,7 @@ extern void nvic_setup (unsigned irq, unsigned priority);
  * @arg irq
  *      IRQ number (0-67, one of the >=0 xxx_IRQn constants).
  */
-static __inline__ void nvic_enable (unsigned irq)
+static inline void nvic_enable (unsigned irq)
 { NVIC->ISER [irq / 32] |= 1 << (irq & 31); }
 
 /**
@@ -44,7 +44,7 @@ static __inline__ void nvic_enable (unsigned irq)
  * @arg irq
  *      IRQ number (0-67, one of the >=0 xxx_IRQn constants).
  */
-static __inline__ void nvic_disable (unsigned irq)
+static inline void nvic_disable (unsigned irq)
 { NVIC->ICER [irq / 32] |= 1 << (irq & 31); }
 
 /**
@@ -54,7 +54,7 @@ static __inline__ void nvic_disable (unsigned irq)
  * @arg irq
  *      IRQ number (0-67, one of the >=0 xxx_IRQn constants).
  */
-static __inline__ void nvic_set_pending (unsigned irq)
+static inline void nvic_set_pending (unsigned irq)
 { NVIC->ISPR [irq / 32] |= 1 << (irq & 31); }
 
 /**
@@ -65,7 +65,7 @@ static __inline__ void nvic_set_pending (unsigned irq)
  * @arg irq
  *      IRQ number (0-67, one of the >=0 xxx_IRQn constants).
  */
-static __inline__ void nvic_clear_pending (unsigned irq)
+static inline void nvic_clear_pending (unsigned irq)
 { NVIC->ICPR [irq / 32] |= 1 << (irq & 31); }
 
 /**
@@ -73,7 +73,7 @@ static __inline__ void nvic_clear_pending (unsigned irq)
  * @arg irq
  *      IRQ number (0-67, one of the >=0 xxx_IRQn constants).
  */
-static __inline__ unsigned nvic_is_active (unsigned irq)
+static inline unsigned nvic_is_active (unsigned irq)
 { return NVIC->IABR [irq / 32] & (1 << (irq & 31)); }
 
 /**
@@ -81,7 +81,7 @@ static __inline__ unsigned nvic_is_active (unsigned irq)
  * @arg irq
  *      IRQ number (0-67, one of the >=0 xxx_IRQn constants).
  */
-static __inline__ void nvic_irq_trigger (unsigned irq)
+static inline void nvic_irq_trigger (unsigned irq)
 { NVIC->STIR = irq; }
 
 #endif // __NVIC_H__

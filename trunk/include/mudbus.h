@@ -15,16 +15,11 @@
  *      up to 126 slave devices on a single serial bus (UART, RS-232, RS-485 etc).
  *      There is only one master and there's no way to detect bus conflicts,
  *      thus the protocol is designed to avoid them.
- *
- *      The current implementation supports a single instance of master and
- *      slave interfaces. However, the library has been designed to be easily
- *      modified to support multiple instances if needed, but the number of
- *      function parameters will rise and code effectivity will drop.
  */
 
 #include <stdint.h>
 
-// Include the platform-dependent USART library
+// Include the platform-dependent library
 #ifdef MCU_stm32
 #include "mudbus-stm32.h"
 #endif
@@ -131,17 +126,6 @@ typedef struct
 } PACKED mb_stdconf_t;
 
 /**
- * Update the CRC8 value with a new data byte.
- * @arg crc8
- *      The previous value of CRC8
- * @arg c
- *      The incoming character
- * @return
- *      The updated CRC8
- */
-extern uint8_t mb_crc8_update (uint8_t crc8, uint8_t c);
-
-/**
  * Compute the CRC8 of a data block.
  * @arg data
  *      A pointer to data
@@ -150,12 +134,10 @@ extern uint8_t mb_crc8_update (uint8_t crc8, uint8_t c);
  * @return
  *      The computed CRC8
  */
-extern uint8_t mb_crc8 (uint8_t *data, uint8_t len);
+extern uint8_t mb_crc8 (uint8_t *data, int len);
 
 /// This array can hold any legal MudBus packet
 typedef uint8_t mb_packet_t [2 + 16 + 1];
-
-// ----- // ----- // ----- // MudBus Master // ----- // ----- // ----- //
 
 /// Max number of fragments in the outgoing queue
 #define MBM_QUEUE_SIZE		4
@@ -169,6 +151,8 @@ typedef struct
     const uint8_t *queue_data [MBM_QUEUE_SIZE];
     /// The length of data fragments in the outgoing queue
     uint8_t queue_len [MBM_QUEUE_SIZE];
+    /// The platform-dependent driver
+    mudbus_driver_t driver;
     /// MudBus Master state flags (see MBMF_XXX)
     volatile uint8_t flags;
     /// Queue head and tail pointers (if equal, see MBMF_EMPTYQ)
@@ -179,39 +163,41 @@ typedef struct
     volatile uint8_t inb_len;
     /// Incoming packet buffer
     volatile mb_packet_t inb;
-} mudbus_master_t;
+} mudbus_t;
 
 /// Sending CRC8
 #define MBMF_CRC8		0x01
 /// Sending 4 spaces
 #define MBMF_SPACE		0x02
+/// The queue tail element has been sent
+#define MBMF_TAILSENT		0x04
 /// Outgoing queue is empty
 #define MBMF_EMPTYQ		0x80
 
-/// The global MudBus master interface instance
-extern mudbus_master_t mbm;
+/**
+ * Initialize the MudBus in Master mode.
+ * The routine will initialize the USART defined by the MBM_USART macro
+ * and the associated DMA channel.
+ * @arg mb
+ *      The MudBus object.
+ */
+extern void mbm_init (mudbus_t *mb);
 
 /**
- * Initialize the MudBus master structure.
+ * Initialize the MudBus in Slave mode.
+ * The routine will initialize the USART defined by the MBS_USART macro
+ * and the associated DMA channel.
+ * @arg mb
+ *      The MudBus object.
  */
-extern void mbm_init ();
-
-/**
- * Check if this packet is still in the outgoing queue.
- * For example, you can use this function to know if a packet
- * buffer may be re-used to send a new packet.
- * @arg data
- *      A pointer to packet, which was (possibly) passed earlier
- *      to @a mbm_send().
- * @return
- *      true if packet is still in queue, false otherwise
- */
-//extern bool mbm_queued (const uint8_t *data);
+extern void mbs_init (mudbus_t *mb);
 
 /**
  * Put a fragment of the packet into the outgoing queue.
  * After sending the last fragment the engine will automatically
  * send a CRC8 of all the data that has been sent.
+ * @arg mb
+ *      The MudBus object
  * @arg data
  *      A pointer to packet fragment data
  * @arg len
@@ -219,38 +205,44 @@ extern void mbm_init ();
  * @return
  *      false if there's no space in queue
  */
-extern bool mbm_send (const uint8_t *data, uint8_t len);
+extern bool mb_send (mudbus_t *mb, const uint8_t *data, uint8_t len);
 
 /**
  * When the master receives a packet, its CRC is checked and if the packet
  * is ok, it is sent to this user-supplied function.
+ * @arg mb
+ *      The MudBus object
  * @arg data
  *      A pointer to whole packet, starting from header
  */
-extern void mbm_user_recv (uint8_t *data);
+extern void mb_user_recv (mudbus_t *mb, uint8_t *data);
 
 /**
  * When the master interface receives a error packet, it is sent to this
  * user-supplied function.
+ * @arg mb
+ *      The MudBus object
  * @arg data
  *      A pointer to whole packet, starting from header
  */
-extern void mbm_user_error (uint8_t *data);
-
-// ----- // ----- // ----- // MudBus Slave // ----- // ----- // ----- //
+extern void mb_user_error (mudbus_t *mb, uint8_t *data);
 
 /**
- * This structure holds the whole state of the MudBus slave interface.
+ * This function must be called from DMA IRQ handler for the channel that works
+ * with USART TX at the end of transmission. The routine will initiate the
+ * transmission of the next fragment, if there is any in the queue.
+ * @arg mb
+ *      The MudBus object
  */
-typedef struct
-{
-#ifndef MBS_STATIC_USART
-    /// A pointer to the USART associated with this interface
-    mudbus_usart_t *mbs_usart;
-#endif
-} mudbus_slave_t;
+extern void mb_send_next (mudbus_t *mb);
 
-/// The global MudBus master interface instance
-extern mudbus_slave_t mbs;
+/**
+ * This function must be called from DMA IRQ handler for the channel that works
+ * with USART TX when a DMA or USART error is detected. This will stop all the
+ * transfers and clear the queue.
+ * @arg mb
+ *      The MudBus object
+ */
+extern void mb_send_stop (mudbus_t *mb);
 
 #endif // __MUDBUS_H__
