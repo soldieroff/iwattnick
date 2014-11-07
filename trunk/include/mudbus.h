@@ -15,6 +15,13 @@
  *      up to 126 slave devices on a single serial bus (UART, RS-232, RS-485 etc).
  *      There is only one master and there's no way to detect bus conflicts,
  *      thus the protocol is designed to avoid them.
+ *
+ *      The implementation does not impose any limits on the number of instances
+ *      used. Every MudBus instance (which is encapsulated in a mudbus_t strcuture)
+ *      contains a field called 'driver' which contains the hardware-specific part.
+ *
+ *      The 'driver' field is initialized separately (see mudbus-stm32-gen.h
+ *      for an easy way to generate driver initialization code for any UART).
  */
 
 #include <stdint.h>
@@ -136,6 +143,17 @@ typedef struct
  */
 extern uint8_t mb_crc8 (uint8_t *data, int len);
 
+/**
+ * Update the CRC8 value with a new data byte.
+ * @arg crc8
+ *      The previous value of CRC8
+ * @arg c
+ *      The incoming character
+ * @return
+ *      The updated CRC8
+ */
+extern uint8_t mb_crc8_update (uint8_t crc8, uint8_t c);
+
 /// This array can hold any legal MudBus packet
 typedef uint8_t mb_packet_t [2 + 16 + 1];
 
@@ -153,9 +171,9 @@ typedef struct
     uint8_t queue_len [MBM_QUEUE_SIZE];
     /// The platform-dependent driver
     mudbus_driver_t driver;
-    /// MudBus Master state flags (see MBMF_XXX)
+    /// MudBus state flags (see MBF_XXX)
     volatile uint8_t flags;
-    /// Queue head and tail pointers (if equal, see MBMF_EMPTYQ)
+    /// Queue head and tail pointers (if equal, see MBF_EMPTYQ)
     volatile uint8_t queue_head, queue_tail;
     /// The current CRC8 (updated with every new block)
     volatile uint8_t crc8;
@@ -166,31 +184,24 @@ typedef struct
 } mudbus_t;
 
 /// Sending CRC8
-#define MBMF_CRC8		0x01
+#define MBF_CRC8		0x01
 /// Sending 4 spaces
-#define MBMF_SPACE		0x02
+#define MBF_SPACE		0x02
 /// The queue tail element has been sent
-#define MBMF_TAILSENT		0x04
+#define MBF_TAILSENT		0x04
 /// Outgoing queue is empty
-#define MBMF_EMPTYQ		0x80
+#define MBF_EMPTYQ		0x80
 
 /**
- * Initialize the MudBus in Master mode.
- * The routine will initialize the USART defined by the MBM_USART macro
- * and the associated DMA channel.
+ * Initialize the MudBus instance.
+ *
+ * You MUST initialize the 'driver' field in the 'mudbus_t' structure
+ * before calling this function. See "mudbus-stm32-gen.h" for an
+ * easy way to create a driver initialization routine.
  * @arg mb
  *      The MudBus object.
  */
-extern void mbm_init (mudbus_t *mb);
-
-/**
- * Initialize the MudBus in Slave mode.
- * The routine will initialize the USART defined by the MBS_USART macro
- * and the associated DMA channel.
- * @arg mb
- *      The MudBus object.
- */
-extern void mbs_init (mudbus_t *mb);
+extern void mb_init (mudbus_t *mb);
 
 /**
  * Put a fragment of the packet into the outgoing queue.
