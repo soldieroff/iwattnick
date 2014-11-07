@@ -15,16 +15,6 @@
  *      for the MudBus library on STM32 microcontroller family.
  */
 
-// MudBus Master USART TX hardware feature
-#define MBM_USART_TX		JOIN3 (USART, MBM_USART, _TX)
-// MudBus Master USART RX hardware feature
-#define MBM_USART_RX		JOIN3 (USART, MBM_USART, _RX)
-
-// MudBus Slave USART TX hardware feature
-#define MBS_USART_TX		JOIN3 (USART, MBS_USART, _TX)
-// MudBus Slave USART RX hardware feature
-#define MBS_USART_RX		JOIN3 (USART, MBS_USART, _RX)
-
 /**
  * The MudBus "driver" which contains all the data to deal with
  * underlying hardware.
