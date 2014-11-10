@@ -44,6 +44,10 @@
 // Serial port setup for MudBus Slave
 #define USART2_SETUP		(9600 | USART_CHARBITS_8 | USART_PARITY_NONE | USART_STOPBITS_1)
 
+// USART IRQ priorities
+#define USART1_IRQ_PRIO		0
+#define USART2_IRQ_PRIO		0
+
 // USART1 I/O ports
 #define USART1_TX_PORT		A
 #define USART1_TX_BIT		9

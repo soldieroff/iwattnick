@@ -59,7 +59,7 @@ static inline void nvic_set_pending (unsigned irq)
 
 /**
  * Clear the pending flag on given IRQ.
- * This is useful for edge-triggered interrupts, to acknowledge
+ * This is useful for edge-triggered interrupts; to acknowledge
  * level-triggered interrupts you must clear the interrupt pending
  * status directly in the hardware connected to this IRQ.
  * @arg irq

@@ -47,28 +47,40 @@ extern void mbd_master_init (mudbus_driver_t *mbd);
  *
  * You must disable mute to return into normal mode.
  * @arg mbd
- *      The platform-dependent driver
+ *      The platform driver data
  * @arg mute
  *      true to mute TX output, false to enable it back
  */
 extern void mbd_tx_mute (mudbus_driver_t *mbd, bool mute);
 
 /**
- * Check if USART transmitter is still busy sending data.
- * In fact, this checks if USART TX is connected to DMA
- * since the DMAT flag in USART is dropped in interrupt.
+ * Check if USART transmitter is free to start sending next
+ * data block. This does not mean the USART is idle as it
+ * may transmit the bits of last characters at this time.
  * @arg mbd
- *      The platform-dependent driver
+ *      The platform driver data
  * @return
- *      true if USART TX is busy
+ *      true if USART+DMA transmitter is busy
  */
 static inline bool mbd_tx_busy (mudbus_driver_t *mbd)
 { return (mbd->usart->CR3 & USART_CR3_DMAT) != 0; }
 
 /**
- * Start packet fragment transmission using the driver.
+ * Check if USART transmitter is idle e.g. has finished
+ * transmitting everything including the last character
+ * in the internal shift register.
  * @arg mbd
- *      The platform-dependent driver
+ *      The platform driver data
+ * @return
+ *      true if USART transmitter is idle
+ */
+static inline bool mbd_tx_complete (mudbus_driver_t *mbd)
+{ return (mbd->usart->SR & USART_SR_TC) != 0; }
+
+/**
+ * Start packet fragment transmission.
+ * @arg mbd
+ *      The platform driver data
  * @arg data
  *      A pointer to packet fragment data
  * @arg len
@@ -79,14 +91,14 @@ extern void mbd_tx_start (mudbus_driver_t *mbd, const uint8_t *data, uint8_t len
 /**
  * Stop the USART transmitter and the DMA controller.
  * @arg mbd
- *      The platform-dependent driver
+ *      The platform driver data
  */
 extern void mbd_tx_stop (mudbus_driver_t *mbd);
 
 /**
  * Stop the USART receiver and the DMA controller.
  * @arg mbd
- *      The platform-dependent driver
+ *      The platform driver data
  */
 extern void mbd_rx_stop (mudbus_driver_t *mbd);
 
@@ -95,11 +107,22 @@ extern void mbd_rx_stop (mudbus_driver_t *mbd);
  * In fact, this checks if USART RX is connected to DMA
  * since the DMAR flag in USART is dropped in interrupt.
  * @arg mbd
- *      The platform-dependent driver
+ *      The platform driver data
  * @return
  *      true if USART RX is busy
  */
 static inline bool mbd_rx_busy (mudbus_driver_t *mbd)
 { return (mbd->usart->CR3 & USART_CR3_DMAR) != 0; }
+
+/**
+ * Receive a packet fragment.
+ * @arg mbd
+ *      The platform driver data
+ * @arg data
+ *      A pointer to a buffer for packet fragment data
+ * @arg len
+ *      The length of the buffer
+ */
+extern void mbd_rx_start (mudbus_driver_t *mbd, uint8_t *data, uint8_t len);
 
 #endif // __MUDBUS_STM32_H__
