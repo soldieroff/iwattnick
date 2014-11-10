@@ -4,10 +4,52 @@
 
 mudbus_t mb;
 
-#define MB_DRVINIT	mbd_master_init
+#define MB_DRVINIT	mbd_init
 #define MB_USART	MBM_USART
 #define MB_VAR		mb
 #include "mudbus-stm32-gen.h"
+
+/// Device identifier
+const mb_devid_t mb_devid =
+{
+    /// firmware version, 4.4 hi/lo
+    MB_VERSION (0, 1),
+    /// Manufacturer ID
+    MBMID_ZAP,
+    /// Product ID
+    MBPID_ZAP_IWATTNICK,
+    /// Type ID
+    MBTID_OTHER,
+};
+
+static const mb_cas_area_t mb_cas [] =
+{
+    { MB_CASA_DEVID | MBCAF_WP, MB_CASA_DEVID + sizeof (mb_devid), &mb_devid },
+};
+
+void mb_user_recv (mudbus_t *mb)
+{
+    switch (mb->inb [2] & MB_CMD_MASK)
+    {
+        case MBC_ERROR:
+            break;
+
+        case MBC_READ:
+        {
+            mb_cmd_read (mb, mb_cas, ARRAY_LEN (mb_cas));
+            break;
+        }
+
+        case MBC_WRITE:
+            break;
+
+        case MBC_DATA:
+            break;
+
+        case MBC_EXEC:
+            break;
+    }
+}
 
 uint32_t ost_sec;
 
@@ -21,16 +63,16 @@ int main (void)
     clock_init ();
     led_init ();
 
+    stdio_init (USART1);
+
     // Инициализация MudBus Master'а
-    mbd_master_init (&mb.driver);
-    mb_init (&mb);
+    mbd_init (&mb.driver);
+    mb_init (&mb, '@');
 
     // Настроим и включим прерывания
     __enable_irq ();
 
     ost_disable (&ost_sec);
-
-    stdio_init (USART1);
 
     for (;;)
     {

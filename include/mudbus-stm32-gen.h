@@ -114,15 +114,30 @@ void MB_DRVINIT (mudbus_driver_t *mbd)
 
     // Initialize the USART
     usart_init (USART (MB), MB_USART_BUS_FREQ, JOIN3 (USART, MB_USART, _SETUP));
+    // Generate IRQs on RX errors
+    USART (MB)->CR3 |= USART_CR3_EIE;
+    // And on IDLE line
+    USART (MB)->CR1 |= USART_CR1_IDLEIE;
 
     // Set up the DMA TX and RX IRQ handlers
     nvic_setup (DMA_IRQ (MB_USART_TX), DMA_IRQ_PRIO (MB_USART_TX));
     nvic_setup (DMA_IRQ (MB_USART_RX), DMA_IRQ_PRIO (MB_USART_RX));
+    // And the USART IRQ handler too
+    nvic_setup (JOIN3 (USART, MB_USART, _IRQn), JOIN3 (USART, MB_USART, _IRQ_PRIO));
 }
 
 DMA_IRQ_HANDLER (MB_USART_TX)
 {
     uint32_t isr = DMA (MB_USART_TX)->ISR;
+
+    // Transfer error?
+    if (isr & DMA_ISR (MB_USART_TX, TEIF))
+    {
+        // Acknowledge the interrupt
+        DMA (MB_USART_TX)->IFCR = DMA_IFCR (MB_USART_TX, CTEIF);
+
+        mb_send_stop (&MB_VAR);
+    }
 
     // Transfer complete?
     if (isr & DMA_ISR (MB_USART_TX, GIF))
@@ -130,33 +145,59 @@ DMA_IRQ_HANDLER (MB_USART_TX)
         // Acknowledge the interrupt
         DMA (MB_USART_TX)->IFCR = DMA_IFCR (MB_USART_TX, CGIF);
 
-        // Disable USART1 -> DMA transmission
-        USART (MBM)->CR3 &= ~USART_CR3_DMAT;
+        // Disable USART -> DMA transmission
+        USART (MB)->CR3 &= ~USART_CR3_DMAT;
 
         mb_send_next (&MB_VAR);
-    }
-    // Transfer error?
-    else if (isr & DMA_ISR (MB_USART_TX, TEIF))
-    {
-        // Acknowledge the interrupt
-        DMA (MB_USART_TX)->IFCR = DMA_IFCR (MB_USART_TX, CTEIF);
-
-        // Disable USART1 -> DMA transmission
-        USART (MBM)->CR3 &= ~USART_CR3_DMAT;
-
-        mb_send_stop (&MB_VAR);
     }
 }
 
 DMA_IRQ_HANDLER (MB_USART_RX)
 {
-    if (DMA (MB_USART_TX)->ISR & DMA_ISR (USART1_RX, GIF))
+    uint32_t isr = DMA (MB_USART_RX)->ISR;
+
+    // Transfer error?
+    if (isr & DMA_ISR (MB_USART_TX, TEIF))
     {
         // Acknowledge the interrupt
-        DMA (MB_USART_TX)->IFCR = DMA_IFCR (USART1_RX, CGIF);
+        DMA (MB_USART_TX)->IFCR = DMA_IFCR (MB_USART_TX, CTEIF);
 
-        // Disable USART1 -> DMA transmission
-        USART (MBM)->CR3 &= ~USART_CR3_DMAR;
+        mb_recv_error (&MB_VAR);
+    }
+
+    if (isr & DMA_ISR (MB_USART_RX, GIF))
+    {
+        // Acknowledge the interrupt
+        DMA (MB_USART_RX)->IFCR = DMA_IFCR (MB_USART_RX, CGIF);
+
+        // Disable DMA -> USART transmission
+        USART (MB)->CR3 &= ~USART_CR3_DMAR;
+
+        // Send next frag
+        mb_recv_next (&MB_VAR);
+    }
+}
+
+void JOIN3 (USART, MB_USART, _IRQHandler) ()
+{
+    uint32_t sr = USART (MB)->SR;
+
+    if ((sr & USART_SR_TC) && (USART (MB)->CR1 & USART_CR1_TCIE))
+    {
+        // Disable TC interrupt, will re-enable if required
+        USART (MB)->CR1 &= ~USART_CR1_TCIE;
+        // TX complete
+        mb_send_next (&MB_VAR);
+    }
+
+    if (sr & (USART_SR_FE | USART_SR_NE | USART_SR_ORE | USART_SR_IDLE))
+    {
+        if (sr & USART_SR_IDLE)
+            // Clear the IDLE bit with a void read from DR
+            (void)USART (MB)->DR;
+
+        // Receiver error or IDLE pseudo-symbol received, restart
+        mb_recv_error (&MB_VAR);
     }
 }
 
@@ -166,3 +207,6 @@ DMA_IRQ_HANDLER (MB_USART_RX)
 #undef MB_APB2ENR_BITS_2
 #undef MB_USART_TX
 #undef MB_USART_RX
+#undef MB_DRVINIT
+#undef MB_USART
+#undef MB_VAR
