@@ -13,96 +13,73 @@
 /// Kick DMA to send next fragment
 void mb_send_next (mudbus_t *mb)
 {
-    const uint8_t *data;
-    uint8_t len;
-
     // If transmitter is still busy, will do it later
     if (mbd_tx_busy (&mb->driver))
         return;
 
-    // If last fragment in queue was sent, advance queue tail
-    if (mb->flags & MBF_TX_Q)
+    // If we have finished, stop sending
+    if (mb->flags & MBF_TX_SPACE)
     {
-        mb->flags &= ~MBF_TX_Q;
+        // all done
+        mb->flags &= ~MBF_TX_SPACE;
 
-        // Advance queue tail
-        mb->queue_tail = (mb->queue_tail + 1) & (MBM_QUEUE_SIZE - 1);
-        if (mb->queue_tail == mb->queue_head)
-            mb->flags |= MBF_EMPTYQ;
+        // Disable USART TC interrupt, will re-enable when required
+        mbd_tx_irq (&mb->driver, false);
+
+        return;
     }
 
-    if (mb->flags & MBF_EMPTYQ)
+    uint8_t len;
+
+    // After we have sent the packet itself, send the space
+    if (mb->flags & MBF_TX_OUTB)
     {
-        data = (uint8_t *)&mb->crc8;
+        mb->outb_len = 0;
+        mb->flags = (mb->flags & ~MBF_TX_OUTB) | MBF_TX_SPACE;
 
-        if (!(mb->flags & MBF_TX_CRC8))
-        {
-            // will send CRC8
-            mb->flags |= MBF_TX_CRC8;
-            len = 1;
-        }
-        else if (!(mb->flags & MBF_TX_SPACE))
-        {
-            // will send a 4-char space
-            mb->flags |= MBF_TX_SPACE;
-
-            // Send any byte (TX will be muted)
-            len = 1;
-        }
-        else
-        {
-            // If the space transmission is not complete, wait USART IRQ
-            if (!mbd_tx_complete (&mb->driver))
-                return;
-
-            // all done
-            mb->flags &= ~(MBF_TX_CRC8 | MBF_TX_SPACE);
-            // Don't send anything
-            len = 0;
-        }
+        // Send any byte (TX will be muted)
+        len = 1;
     }
     else
     {
-        data = mb->queue_data [mb->queue_tail];
-        len = mb->queue_len [mb->queue_tail];
-
-        mb->flags = (mb->flags & ~(MBF_TX_CRC8 | MBF_TX_SPACE)) | MBF_TX_Q;
+        mb->flags |= MBF_TX_OUTB;
+        len = mb->outb_len;
     }
 
     // While sending space, mute TX, enable IRQ on TC
     mbd_tx_mute (&mb->driver, mb->flags & MBF_TX_SPACE);
 
+    // Enable transmission complete IRQ
+    mbd_tx_irq (&mb->driver, true);
+
     // Send the data
-    if (len)
-        mbd_tx_start (&mb->driver, data, len);
+    mbd_tx_start (&mb->driver, mb->outb, len);
 }
 
 void mb_send_stop (mudbus_t *mb)
 {
     mbd_tx_stop (&mb->driver);
-    mb->queue_tail = mb->queue_head;
-    mb->flags = (mb->flags & ~(MBF_TX_CRC8 | MBF_TX_SPACE | MBF_TX_Q)) | MBF_EMPTYQ;
+    mb->outb_len = 0;
+    mb->flags &= ~MBF_TX_SPACE;
 }
 
-void mb_send (mudbus_t *mb, const uint8_t *data, uint8_t len)
+void mb_send_frag (mudbus_t *mb, const uint8_t *data, uint8_t len)
 {
-    // If this is the first fragment, initialize CRC8
-    if (mb->flags & MBF_EMPTYQ)
-        mb->crc8 = MB_CRC8_INIT;
-    else if (mb->queue_head == mb->queue_tail)
-        return; // no space in queue
+    if (mb->outb_len + len > sizeof (mb->outb) - 1)
+        return;
 
-    // Store the fragment in the queue
-    mb->queue_data [mb->queue_head] = data;
-    mb->queue_len [mb->queue_head] = len;
+    memcpy (&mb->outb + mb->outb_len, data, len);
+    mb->outb_len += len;
+}
 
-    // Advance queue head
-    mb->flags &= ~MBF_EMPTYQ;
-    mb->queue_head = (mb->queue_head + 1) & (MBM_QUEUE_SIZE - 1);
+void mb_send_last (mudbus_t *mb, const uint8_t *data, uint8_t len)
+{
+    mb_send_frag (mb, data, len);
 
-    // update CRC8
-    while (len--)
-        mb->crc8 = mb_crc8_update (mb->crc8, *data++);
+    // Append packet CRC8
+    mb->outb [mb->outb_len] = mb_crc8 (mb->outb, mb->outb_len);
+    mb->outb_len++;
 
+    // Go!
     mb_send_next (mb);
 }

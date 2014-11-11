@@ -19,8 +19,8 @@ void mb_recv_next (mudbus_t *mb)
 
     if (mb->inb_len == 0)
         // Set up to receive packet header
-        len = 3;
-    else if (mb->inb_len == 3)
+        len = MB_HDR_LEN;
+    else if (mb->inb_len == MB_HDR_LEN)
     {
         if ((mb->inb [0] != MB_BUSA_BROADCAST) &&
             (mb->inb [0] != mb->addr))
@@ -36,7 +36,7 @@ void mb_recv_next (mudbus_t *mb)
     else
     {
         // Got the whole packet, check the CRC8
-        len = 3 + (mb->inb [1] & MB_LEN_MASK) + 1 + 1;
+        len = MB_HDR_LEN + (mb->inb [1] & MB_LEN_MASK) + 1 + 1;
         if (mb_crc8 (mb->inb, len) == 0)
         {
             mb->flags |= MBX_RX_DIGEST;
@@ -46,7 +46,7 @@ void mb_recv_next (mudbus_t *mb)
 
         // Discard the received packet, listen for the next header
         mb->inb_len = 0;
-        len = 3;
+        len = MB_HDR_LEN;
     }
 
     mbd_rx_start (&mb->driver, mb->inb + mb->inb_len, len);

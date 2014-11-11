@@ -54,6 +54,15 @@ extern void mbd_master_init (mudbus_driver_t *mbd);
 extern void mbd_tx_mute (mudbus_driver_t *mbd, bool mute);
 
 /**
+ * Enable or disable the IRQ that calls mb_send_next().
+ * @arg mbd
+ *      The platform driver data
+ * @arg enable
+ *      if true, enable IRQ
+ */
+extern void mbd_tx_irq (mudbus_driver_t *mbd, bool enable);
+
+/**
  * Check if USART transmitter is free to start sending next
  * data block. This does not mean the USART is idle as it
  * may transmit the bits of last characters at this time.

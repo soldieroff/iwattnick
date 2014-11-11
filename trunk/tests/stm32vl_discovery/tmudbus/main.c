@@ -81,9 +81,8 @@ int main (void)
             ost_arm (&ost_sec, CLOCKS (1.0));
             GPIO (BLED)->ODR ^= BITV (BLED);
 
-            mb_send (&mb, (uint8_t *)"head [", 6);
-            mb_send (&mb, (uint8_t *)"body", 4);
-            mb_send (&mb, (uint8_t *)"] tail", 6);
+            mb_send_frag (&mb, (uint8_t *)"@@Otest [", 9);
+            mb_send_last (&mb, (uint8_t *)"]", 1);
         }
 
         // До следующего прерывания нам делать абсолютно нечего
