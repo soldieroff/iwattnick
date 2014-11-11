@@ -88,13 +88,13 @@ COMPILE.ARM-NONE-EABI-GCC.S    = $(ARM-NONE-EABI-GCC.CC) -o $@ $(strip $(ARM-NON
 define MKCRULES.ARM-NONE-EABI-GCC
 $(if $(filter %.c,$1),$(foreach z,$2,
 $(addsuffix %.o,$(addprefix $$(OUT),$z)): $(addsuffix %.c,$z)
-	$(if $V,,@echo COMPILE.ARM-NONE-EABI-GCC.CC $$< &&)$$(call COMPILE.ARM-NONE-EABI-GCC.CC,$(CFLAGS.$3) $(CFLAGS.$4) $(call .SYSLIBS,CFLAGS,$3,$4))))
+	$(if $V,,@echo COMPILE.ARM-NONE-EABI-GCC.CC $$< &&)$$(call COMPILE.ARM-NONE-EABI-GCC.CC,$(CFLAGS.$3) $(CFLAGS.$4) $(call .LIBFLAGS,CFLAGS,$3,$4))))
 $(if $(filter %.cpp,$1),$(foreach z,$2,
 $(addsuffix %.o,$(addprefix $$(OUT),$z)): $(addsuffix %.cpp,$z)
-	$(if $V,,@echo COMPILE.ARM-NONE-EABI-GCC.CXX $$< &&)$$(call COMPILE.ARM-NONE-EABI-GCC.CXX,$(CXXFLAGS.$3) $(CXXFLAGS.$4) $(call .SYSLIBS,CFLAGS,$3,$4))))
+	$(if $V,,@echo COMPILE.ARM-NONE-EABI-GCC.CXX $$< &&)$$(call COMPILE.ARM-NONE-EABI-GCC.CXX,$(CXXFLAGS.$3) $(CXXFLAGS.$4) $(call .LIBFLAGS,CFLAGS,$3,$4))))
 $(if $(filter %.S,$1),$(foreach z,$2,
 $(addsuffix %.o,$(addprefix $$(OUT),$z)): $(addsuffix %.S,$z)
-	$(if $V,,@echo COMPILE.ARM-NONE-EABI-GCC.S $$< &&)$$(call COMPILE.ARM-NONE-EABI-GCC.S,$(CFLAGS.$3) $(CFLAGS.$4) $(call .SYSLIBS,CFLAGS,$3,$4))))
+	$(if $V,,@echo COMPILE.ARM-NONE-EABI-GCC.S $$< &&)$$(call COMPILE.ARM-NONE-EABI-GCC.S,$(CFLAGS.$3) $(CFLAGS.$4) $(call .LIBFLAGS,CFLAGS,$3,$4))))
 $(ARM-NONE-EABI-GCC.EXTRA.MKCRULES)
 endef
 
@@ -113,7 +113,7 @@ $1: $2\
 $(if $(findstring $L,$4),
 	$(if $V,,@echo LINK.ARM-NONE-EABI-GCC.AR $$@ &&)$$(LINK.ARM-NONE-EABI-GCC.AR))\
 $(if $(findstring $E,$4), $(ARM-NONE-EABI-GCC.LDSCRIPT)
-	$(if $V,,@echo LINK.ARM-NONE-EABI-GCC.EXEC $$@ &&)$$(call LINK.ARM-NONE-EABI-GCC.EXEC,$(subst $(COMMA),$$(COMMA),$(LDFLAGS.$3) $(LDFLAGS.$4)) $(call .SYSLIBS,LDLIBS,$3,$4),$(foreach z,$(LIBS.$3) $(LIBS.$4),$(call ARM-NONE-EABI-GCC.LINKLIB,$z))))
+	$(if $V,,@echo LINK.ARM-NONE-EABI-GCC.EXEC $$@ &&)$$(call LINK.ARM-NONE-EABI-GCC.EXEC,$(subst $(COMMA),$$(COMMA),$(LDFLAGS.$3) $(LDFLAGS.$4)) $(call .LIBFLAGS,LDLIBS,$3,$4),$(foreach z,$(LIBS.$3) $(LIBS.$4),$(call ARM-NONE-EABI-GCC.LINKLIB,$z))))
 $(ARM-NONE-EABI-GCC.EXTRA.MKLRULES)
 endef
 

@@ -10,6 +10,7 @@
 #include "ost.h"
 #include "usart.h"
 #include "printf.h"
+#include "gears.h"
 
 extern void usart1_init ();
 

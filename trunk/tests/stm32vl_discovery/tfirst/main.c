@@ -6,14 +6,7 @@
  */
 
 #include HARDWARE_H
-
-// Инкрементируется 32 раз в секунду
-static volatile uint32_t clock;
-
-void SysTick_Handler ()
-{
-    clock++;
-}
+#include "gears.h"
 
 int main ()
 {
@@ -41,13 +34,6 @@ int main ()
     // Настроим GPIO для кнопки - INPUT Z-state
     *GPIO_CR (USRBUT) = GPIO_SET (*GPIO_CR (USRBUT),
         USRBUT, INPUT, FLOATING);
-
-    // Настроим системный таймер на 32 прерывания в секунду
-    if (SysTick_Config (SystemCoreClock / 32))
-    {
-        /* Capture error */
-        for (;;) ;
-    }
 
     uint32_t counter = 0, speed = 0;
     uint32_t old_bst = 0;

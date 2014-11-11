@@ -9,7 +9,6 @@
 #ifndef __HARDWARE_H__
 #define __HARDWARE_H__
 
-#include "macros.h"
 #include "stm32f10x.h"
 
 // Define AHB bus frequency

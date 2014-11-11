@@ -1,11 +1,12 @@
 # This library provides various unclassified utility functions
 
 LIBS += gears
-DESCRIPTION.gears = A math library for working with fixed-point numbers
+DESCRIPTION.gears = A thin shim around low-level platform hardware
 TARGETS.gears = gears$L
 
-SRC.stm32.gears$L := $(wildcard libs/gears/thumb/*.S)
-SRC.gears$L := $(wildcard libs/gears/*.c) $(SRC.stm32.gears$L)
+SRC.gears$L := $(wildcard libs/gears/*.c) $(wildcard libs/gears/$(MCU)/*.c)
+LIBS.gears$L = CMSIS$L
+CFLAGS.gears$L = -Iinclude/gears -Iinclude/gears/$(MCU)
 
 # makedep doesn't catch this dependency
-$(OUT)libs/gears/dma.o: libs/gears/dmafun.h
+$(OUT)libs/gears/stm32/dma.o: libs/gears/stm32/dmafun.h

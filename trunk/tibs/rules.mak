@@ -180,7 +180,7 @@ $(foreach x,$(GROUPS),$(eval install-$($x.dir): $(foreach y,$($x),install-$y)))
 # Extract just the unique directory names from a list of source files
 .DIRLIST = $(sort $(dir $1))
 # Return the given $1 flags (CFLAGS/CXXFLAGS/LDLIBS) for the module $2/target $3
-.SYSLIBS = $(foreach 4,$(SYSLIBS.$2) $(SYSLIBS.$3),$(subst $(COMMA),$$(COMMA),$($1.$4)))
+.LIBFLAGS = $(foreach 4,$(LIBS.$2) $(LIBS.$3) $(SYSLIBS.$2) $(SYSLIBS.$3),$(subst $(COMMA),$$(COMMA),$($1.$4)))
 # Return installation directory for module $1 target $2, type $3, default value $4.
 # Installation directory may be overriden by defining a variable named either
 # INSTDIR.$(type).$(target) or INSTDIR.$(type).$(module) or INSTDIR.$(target)

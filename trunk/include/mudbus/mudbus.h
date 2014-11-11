@@ -33,7 +33,7 @@
 
 // Include the platform-dependent library
 #ifdef MCU_stm32
-#include "mudbus-stm32.h"
+#include "stm32/driver.h"
 #endif
 
 /// The broadcast MudBus bus address

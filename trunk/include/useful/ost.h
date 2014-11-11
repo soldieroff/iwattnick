@@ -16,6 +16,8 @@
  *      some times per second.
  */
 
+#include "useful.h"
+
 /**
  * The system clock variable.
  */

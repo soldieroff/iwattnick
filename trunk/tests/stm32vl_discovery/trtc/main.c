@@ -5,13 +5,6 @@
 /// The base unixtime for RTC clock
 uint32_t rtc_basetime = 1414489182;
 
-static volatile uint32_t clock;
-
-void SysTick_Handler(void)
-{
-    clock++;
-}
-
 int main (void)
 {
     // Отключаем JTAG, оставляем только SWD
@@ -23,13 +16,6 @@ int main (void)
 
     led_init ();
     rtc_init ();
-
-    /* Setup SysTick Timer for 16 interrupts/sec */
-    if (SysTick_Config (SystemCoreClock / 16))
-    {
-        /* Capture error */
-        for (;;) ;
-    }
 
     uint32_t old_bst = 0;
     uint32_t old_clock = clock;
