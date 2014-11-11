@@ -6,7 +6,6 @@
     GNU Less General Public License version 3 or later.
 */
 
-#include HARDWARE_H
 #include "ost.h"
 
 void ost_arm (uint32_t *timer, uint32_t clocks)

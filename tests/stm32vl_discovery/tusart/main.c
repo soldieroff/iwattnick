@@ -5,13 +5,6 @@
 
 #include "stm32vl_discovery.h"
 
-static volatile uint32_t clock;
-
-void SysTick_Handler(void)
-{
-    clock++;
-}
-
 static void do_test_xsend ()
 {
     for (;;)
@@ -61,13 +54,6 @@ int main (void)
     puts ("USART library demo running");
 
     led_init ();
-
-    /* Setup SysTick Timer for 1 msec interrupts  */
-    if (SysTick_Config (SystemCoreClock / 16))
-    {
-        /* Capture error */
-        for (;;) ;
-    }
 
     uint32_t old_clock = clock;
     uint32_t old_bst = 0;
