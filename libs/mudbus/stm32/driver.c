@@ -25,24 +25,21 @@ void mbd_tx_mute (mudbus_driver_t *mbd, bool mute)
         while (!(mbd->usart->SR & USART_SR_TC))
             ;
         *mbd->gpio_tx_cr = (cr & ~mask) | bits;
-
-        // Generate IRQs on TX complete
-        if (mute)
-            mbd->usart->CR1 |= USART_CR1_TCIE;
-        else
-            mbd->usart->CR1 &= ~USART_CR1_TCIE;
     }
 }
 
 void mbd_tx_start (mudbus_driver_t *mbd, const uint8_t *data, uint8_t len)
 {
-    // Set up DMA channel for transfer
-    dma_copy (mbd->dma, mbd->dma_tx_chan,
-        DMA_CCR_TCIE | DMA_CCR_TEIE | DMA_CCR_PSIZE_8 | DMA_CCR_MSIZE_8 | DMA_CCR_PL_VERYHIGH,
-        (void *)data, (void *)&mbd->usart->DR, len);
+    if (!len)
+        return;
 
     // Enable USART -> DMA transmission
     mbd->usart->CR3 |= USART_CR3_DMAT;
+
+    // Set up DMA channel for transfer
+    dma_copy (mbd->dma, mbd->dma_tx_chan,
+        DMA_CCR_TEIE | DMA_CCR_PSIZE_8 | DMA_CCR_MSIZE_8 | DMA_CCR_PL_VERYHIGH,
+        (void *)data, (void *)&mbd->usart->DR, len);
 }
 
 void mbd_tx_stop (mudbus_driver_t *mbd)
@@ -53,6 +50,9 @@ void mbd_tx_stop (mudbus_driver_t *mbd)
 
 void mbd_rx_start (mudbus_driver_t *mbd, uint8_t *data, uint8_t len)
 {
+    if (!len)
+        return;
+
     // Clear the RX buffer
     mbd->usart->SR &= ~USART_SR_RXNE;
 
@@ -72,4 +72,12 @@ void mbd_rx_stop (mudbus_driver_t *mbd)
 
     // Stop the DMA channel
     dma_stop (mbd->dma, mbd->dma_rx_chan);
+}
+
+void mbd_tx_irq (mudbus_driver_t *mbd, bool enable)
+{
+    if (enable)
+        USART (MB)->CR1 |= USART_CR1_TCIE;
+    else
+        USART (MB)->CR1 &= ~USART_CR1_TCIE;
 }

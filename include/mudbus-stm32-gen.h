@@ -117,7 +117,7 @@ void MB_DRVINIT (mudbus_driver_t *mbd)
     // Generate IRQs on RX errors
     USART (MB)->CR3 |= USART_CR3_EIE;
     // And on IDLE line
-    USART (MB)->CR1 |= USART_CR1_IDLEIE;
+    USART (MB)->CR1 |= USART_CR1_IDLEIE | USART_CR1_TCIE;
 
     // Set up the DMA TX and RX IRQ handlers
     nvic_setup (DMA_IRQ (MB_USART_TX), DMA_IRQ_PRIO (MB_USART_TX));
@@ -128,27 +128,13 @@ void MB_DRVINIT (mudbus_driver_t *mbd)
 
 DMA_IRQ_HANDLER (MB_USART_TX)
 {
-    uint32_t isr = DMA (MB_USART_TX)->ISR;
-
     // Transfer error?
-    if (isr & DMA_ISR (MB_USART_TX, TEIF))
+    if (DMA (MB_USART_TX)->ISR & DMA_ISR (MB_USART_TX, TEIF))
     {
         // Acknowledge the interrupt
         DMA (MB_USART_TX)->IFCR = DMA_IFCR (MB_USART_TX, CTEIF);
 
         mb_send_stop (&MB_VAR);
-    }
-
-    // Transfer complete?
-    if (isr & DMA_ISR (MB_USART_TX, GIF))
-    {
-        // Acknowledge the interrupt
-        DMA (MB_USART_TX)->IFCR = DMA_IFCR (MB_USART_TX, CGIF);
-
-        // Disable USART -> DMA transmission
-        USART (MB)->CR3 &= ~USART_CR3_DMAT;
-
-        mb_send_next (&MB_VAR);
     }
 }
 
@@ -184,8 +170,6 @@ void JOIN3 (USART, MB_USART, _IRQHandler) ()
 
     if ((sr & USART_SR_TC) && (USART (MB)->CR1 & USART_CR1_TCIE))
     {
-        // Disable TC interrupt, will re-enable if required
-        USART (MB)->CR1 &= ~USART_CR1_TCIE;
         // TX complete
         mb_send_next (&MB_VAR);
     }

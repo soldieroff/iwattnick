@@ -10,7 +10,7 @@
 	.cpu cortex-m3
 	.thumb
 
-// void *memclr (void *dest, unsigned len)
+// void memclr (void *dest, unsigned len)
 	.section .text,"ax",%progbits
 	.global	memclr
 	.type	memclr, %function
@@ -18,7 +18,7 @@ memclr:
 	mov	r2, r1
 	mov	r1, #0
 
-// void *memset (void *dest, char c, unsigned len)
+// void memset (void *dest, char c, unsigned len)
 	.global	memset
 	.type	memset, %function
 memset:

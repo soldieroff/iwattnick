@@ -47,6 +47,9 @@
 /// CRC8 polynom: 2^8 + 2^5 + 2^4 + 2^0
 #define MB_CRC8_POLY		0x31
 
+/// Packet header size
+#define MB_HDR_LEN		3
+
 /// Command bitmask
 #define MB_CMD_MASK		0xF0
 /// Number of bits to shift command code
@@ -174,44 +177,33 @@ extern uint8_t mb_crc8_update (uint8_t crc8, uint8_t c);
 /// This array can hold any legal MudBus packet
 typedef uint8_t mb_packet_t [3 + 16 + 1];
 
-/// Max number of fragments in the outgoing queue
-#define MBM_QUEUE_SIZE		4
-
 /**
  * This structure holds the whole state of the MudBus master interface.
  */
 typedef struct
 {
-    /// Pointers to data fragments in the outgoing queue
-    const uint8_t *queue_data [MBM_QUEUE_SIZE];
-    /// The length of data fragments in the outgoing queue
-    uint8_t queue_len [MBM_QUEUE_SIZE];
     /// The platform-dependent driver
     mudbus_driver_t driver;
     /// MudBus state flags (see MBF_XXX)
     uint8_t flags;
-    /// Queue head and tail pointers (if equal, see MBF_EMPTYQ)
-    uint8_t queue_head, queue_tail;
-    /// Outgoing CRC8 (updated with every new fragment)
-    uint8_t crc8;
     /// Length of valid data in incoming buffer
     uint8_t inb_len;
-    /// Incoming packet buffer
-    mb_packet_t inb;
+    /// Outgoing buffer length
+    uint8_t outb_len;
     /// Device address on bus
     uint8_t addr;
+    /// Outgoing packet buffer
+    mb_packet_t outb;
+    /// Incoming packet buffer
+    mb_packet_t inb;
 } mudbus_t;
 
-/// Sending CRC8
-#define MBF_TX_CRC8		0x01
+/// The out buffer is transmitting
+#define MBF_TX_OUTB		0x01
 /// Sending 4 spaces
 #define MBF_TX_SPACE		0x02
-/// The next fragment from FIFO queue is being sent
-#define MBF_TX_Q		0x04
 /// User code is handling an incoming packet
 #define MBX_RX_DIGEST		0x08
-/// Outgoing queue is empty
-#define MBF_EMPTYQ		0x80
 
 /**
  * Initialize the MudBus instance.
@@ -227,24 +219,44 @@ typedef struct
 extern void mb_init (mudbus_t *mb, uint8_t addr);
 
 /**
- * Put a fragment of the packet into the outgoing queue.
- * After sending the last fragment the engine will automatically
- * send a CRC8 of all the data that has been sent.
- *
- * Before sending a packet you may check the MBF_EMPTYQ bit in
- * mb->flags if the transmitter is ready to send a new packet.
- *
- * Note that you must put the second fragment into the queue
- * before the transmission of first fragment ends, otherwise the
- * transmitter will start sending CRC8 and the final space.
+ * Check if a new packet can be sent.
+ * @arg mb
+ *      The MudBus object
+ * @return
+ *      false if there is still unsent data in the outgoing buffer.
+ */
+static inline bool mb_can_send (mudbus_t *mb)
+{ return mb->outb_len == 0; }
+
+/**
+ * Add a fragment of the packet into the outgoing packet buffer.
+ * You can modify mb->outb directly, but this function makes additional
+ * checks, won't allow buffer overruns etc.
  * @arg mb
  *      The MudBus object
  * @arg data
- *      A pointer to packet fragment data
+ *      A pointer to data fragment to add into the output packet buffer.
+ *      This can be NULL if len is zero.
  * @arg len
  *      The length of the packet fragment
  */
-extern void mb_send (mudbus_t *mb, const uint8_t *data, uint8_t len);
+extern void mb_send_frag (mudbus_t *mb, const uint8_t *data, uint8_t len);
+
+/**
+ * Put the last fragment of the packet into the outgoing buffer
+ * (can be the whole packet at once as well). The function will
+ * finalize the packet (compute the CRC8) and start sending.
+ *
+ * Before sending a packet you may check if the transmitter
+ * is ready to send a new packet with the mb_can_send() function.
+ * @arg mb
+ *      The MudBus object
+ * @arg data
+ *      A pointer to packet fragment data. This can be NULL if len is zero.
+ * @arg len
+ *      The length of the packet fragment
+ */
+extern void mb_send_last (mudbus_t *mb, const uint8_t *data, uint8_t len);
 
 /**
  * This function must be called from DMA IRQ handler for the channel that works

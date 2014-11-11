@@ -12,13 +12,10 @@
 
 void mb_init (mudbus_t *mb, uint8_t addr)
 {
-    // Fill some fields with zeros
-    memclr (mb + OFFSETOF (mudbus_t, queue_head),
-        OFFSETOF (mudbus_t, inb) - OFFSETOF (mudbus_t, queue_head));
-
-    mb->flags = MBF_EMPTYQ;
     mb->addr = addr;
 
-    // Set up the receiver
+    memclr (&mb->flags, OFFSETOF (mudbus_t, addr) - OFFSETOF (mudbus_t, flags));
+
+    // Set up UART & DMA to receive packets
     mb_recv_next (mb);
 }

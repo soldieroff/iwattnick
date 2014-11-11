@@ -31,7 +31,7 @@ extern "C" {
  * @arg len
  *      Number of bytes to fill
  */
-extern void *memset (void *dest, char c, unsigned len);
+extern void memset (void *dest, char c, unsigned len);
 
 /**
  * Fill the first @a len bytes of the memory area pointed to by
@@ -41,7 +41,18 @@ extern void *memset (void *dest, char c, unsigned len);
  * @arg len
  *      Number of bytes to fill
  */
-extern void *memclr (void *dest, unsigned len);
+extern void memclr (void *dest, unsigned len);
+
+/**
+ * Optimized traditional memcpy().
+ * @arg dest
+ *      The destination pointer
+ * @arg src
+ *      Source pointer
+ * @arg len
+ *      Number of bytes to copy
+ */
+extern void memcpy (void *dest, const void *src, unsigned len);
 
 #ifdef __cplusplus
 }
