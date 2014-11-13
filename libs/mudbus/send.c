@@ -7,8 +7,8 @@
 */
 
 #include HARDWARE_H
-#include "gears.h"
 #include "mudbus.h"
+#include "stdfun.h"
 
 /// Kick DMA to send next fragment
 void mb_send_next (mudbus_t *mb)
@@ -49,11 +49,11 @@ void mb_send_next (mudbus_t *mb)
     // While sending space, mute TX, enable IRQ on TC
     mbd_tx_mute (&mb->driver, mb->flags & MBF_TX_SPACE);
 
-    // Enable transmission complete IRQ
-    mbd_tx_irq (&mb->driver, true);
-
     // Send the data
     mbd_tx_start (&mb->driver, mb->outb, len);
+
+    // Enable transmission complete IRQ
+    mbd_tx_irq (&mb->driver, true);
 }
 
 void mb_send_stop (mudbus_t *mb)
@@ -68,7 +68,7 @@ void mb_send_frag (mudbus_t *mb, const uint8_t *data, uint8_t len)
     if (mb->outb_len + len > sizeof (mb->outb) - 1)
         return;
 
-    memcpy (&mb->outb + mb->outb_len, data, len);
+    memcpy (mb->outb + mb->outb_len, data, len);
     mb->outb_len += len;
 }
 
@@ -82,4 +82,29 @@ void mb_send_last (mudbus_t *mb, const uint8_t *data, uint8_t len)
 
     // Go!
     mb_send_next (mb);
+}
+
+void mb_send_hdr (mudbus_t *mb, uint8_t busa, uint8_t cmd, uint8_t len)
+{
+    DEBUG_BREAK_IF (!mb_can_send (mb));
+    DEBUG_BREAK_IF (cmd & ~MB_CMD_MASK);
+    DEBUG_BREAK_IF ((len == 0) || (len > 16));
+
+    // Create the packet header directly in mb->outb
+    mb->outb [0] = busa;
+    mb->outb [1] = mb->busa;
+    mb->outb [2] = cmd | (len - 1);
+    mb->outb_len = 3;
+}
+
+void mb_send_nofs (mudbus_t *mb, uint8_t n, uint32_t ofs)
+{
+    DEBUG_BREAK_IF (n > MB_N_MAX);
+    DEBUG_BREAK_IF (ofs > MB_OFS_MASK);
+
+    ofs |= (n << MB_N_SHIFT);
+
+    mb->outb [mb->outb_len] = ofs;
+    mb->outb [mb->outb_len + 1] = ofs >> 8;
+    mb->outb_len += 2;
 }

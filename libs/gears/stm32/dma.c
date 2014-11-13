@@ -8,6 +8,7 @@
 
 #include HARDWARE_H
 #include "dma.h"
+#include "useful.h"
 
 #ifdef DMA1_BASE
 #define _DMA_NUM 1

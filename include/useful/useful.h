@@ -52,4 +52,14 @@ typedef enum { false = 0, true = !false } bool;
 /// Join three tokens together and interpret the result as a new token
 #define JOIN5(a,b,c,d,e)	_JOIN5(a,b,c,d,e)
 
+#if defined __DEBUG__ && defined CORE_CORTEX_M3
+/// Break into debugger
+#  define DEBUG_BREAK()		__asm__ __volatile__ ("bkpt #0")
+/// Break into debugger if condition @a c is true
+#  define DEBUG_BREAK_IF(c)	if (c) DEBUG_BREAK ();
+#else
+#  define DEBUG_BREAK()
+#  define DEBUG_BREAK_IF(c)
+#endif
+
 #endif // __USEFUL_H__

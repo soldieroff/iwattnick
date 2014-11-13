@@ -7,7 +7,7 @@
 */
 
 #include HARDWARE_H
-#include "mudbus-stm32.h"
+#include "driver.h"
 #include "nvic.h"
 #include "usart.h"
 #include "dma.h"
@@ -117,7 +117,7 @@ void MB_DRVINIT (mudbus_driver_t *mbd)
     // Generate IRQs on RX errors
     USART (MB)->CR3 |= USART_CR3_EIE;
     // And on IDLE line
-    USART (MB)->CR1 |= USART_CR1_IDLEIE | USART_CR1_TCIE;
+    USART (MB)->CR1 = (USART (MB)->CR1 | USART_CR1_IDLEIE) & ~USART_CR1_TCIE;
 
     // Set up the DMA TX and RX IRQ handlers
     nvic_setup (DMA_IRQ (MB_USART_TX), DMA_IRQ_PRIO (MB_USART_TX));
@@ -128,13 +128,24 @@ void MB_DRVINIT (mudbus_driver_t *mbd)
 
 DMA_IRQ_HANDLER (MB_USART_TX)
 {
+    uint32_t isr = DMA (MB_USART_TX)->ISR;
+
     // Transfer error?
-    if (DMA (MB_USART_TX)->ISR & DMA_ISR (MB_USART_TX, TEIF))
+    if (isr & DMA_ISR (MB_USART_TX, TEIF))
     {
         // Acknowledge the interrupt
         DMA (MB_USART_TX)->IFCR = DMA_IFCR (MB_USART_TX, CTEIF);
 
         mb_send_stop (&MB_VAR);
+    }
+
+    if (isr & DMA_ISR (MB_USART_TX, GIF))
+    {
+        // Acknowledge the interrupt
+        DMA (MB_USART_TX)->IFCR = DMA_IFCR (MB_USART_TX, CGIF);
+
+        // Disable USART -> DMA signaling
+        USART (MB)->CR3 &= ~USART_CR3_DMAT;
     }
 }
 
@@ -148,7 +159,7 @@ DMA_IRQ_HANDLER (MB_USART_RX)
         // Acknowledge the interrupt
         DMA (MB_USART_TX)->IFCR = DMA_IFCR (MB_USART_TX, CTEIF);
 
-        mb_recv_error (&MB_VAR);
+        mb_recv_reset (&MB_VAR);
     }
 
     if (isr & DMA_ISR (MB_USART_RX, GIF))
@@ -168,12 +179,6 @@ void JOIN3 (USART, MB_USART, _IRQHandler) ()
 {
     uint32_t sr = USART (MB)->SR;
 
-    if ((sr & USART_SR_TC) && (USART (MB)->CR1 & USART_CR1_TCIE))
-    {
-        // TX complete
-        mb_send_next (&MB_VAR);
-    }
-
     if (sr & (USART_SR_FE | USART_SR_NE | USART_SR_ORE | USART_SR_IDLE))
     {
         if (sr & USART_SR_IDLE)
@@ -181,7 +186,15 @@ void JOIN3 (USART, MB_USART, _IRQHandler) ()
             (void)USART (MB)->DR;
 
         // Receiver error or IDLE pseudo-symbol received, restart
-        mb_recv_error (&MB_VAR);
+        mb_recv_reset (&MB_VAR);
+    }
+
+    if ((sr & USART_SR_TC) && (USART (MB)->CR1 & USART_CR1_TCIE))
+    {
+        // Disable TX complete interrupts, will re-enable in mb_send_next if required
+        USART (MB)->CR1 &= ~USART_CR1_TCIE;
+        // TX complete
+        mb_send_next (&MB_VAR);
     }
 }
 

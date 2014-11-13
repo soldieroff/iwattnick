@@ -144,8 +144,8 @@ endef
 define MKDRULES.ARM-NONE-EABI-GCC
 $1: $(MAKEDEP_DEP) $2
 	$(if $V,,@echo MAKEDEP.ARM-NONE-EABI-GCC $$@ &&)$$(call MAKEDEP.ARM-NONE-EABI-GCC,\
-	$(subst $(COMMA),$$(COMMA),$(CFLAGS.$3) $(CFLAGS.$4) $(CFLAGS)),\
-	$(subst $(COMMA),$$(COMMA),-D__cplusplus $(CXXFLAGS.$3) $(CXXFLAGS.$4) $(CXXFLAGS)),\
+	$(subst $(COMMA),$$(COMMA),$(CFLAGS.$3) $(CFLAGS.$4) $(CFLAGS) $(call .LIBFLAGS,CFLAGS,$3,$4)),\
+	$(subst $(COMMA),$$(COMMA),-D__cplusplus $(CXXFLAGS.$3) $(CXXFLAGS.$4) $(CXXFLAGS) $(call .LIBFLAGS,CXXFLAGS,$3,$4)),\
 	$(subst $(COMMA),$$(COMMA),$(SFLAGS.$3) $(SFLAGS.$4) $(SFLAGS)))
 $(ARM-NONE-EABI-GCC.EXTRA.MKDRULES)
 endef

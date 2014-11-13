@@ -19,7 +19,7 @@
 extern "C" {
 #endif
 
-#include <stdint.h>
+#include "useful.h"
 
 /// 8 bit characters
 #define USART_CHARBITS_8	0x00000000

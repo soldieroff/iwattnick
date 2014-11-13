@@ -9,6 +9,8 @@
 #ifndef __MUDBUS_STM32_H__
 #define __MUDBUS_STM32_H__
 
+#include "useful.h"
+
 /**
  * @file mudbus-stm32.h
  *      This file defines the platform-specific functions

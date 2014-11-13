@@ -7,8 +7,9 @@
 */
 
 #include HARDWARE_H
-#include "mudbus-stm32.h"
+#include "driver.h"
 #include "dma.h"
+#include "gears.h"
 
 void mbd_tx_mute (mudbus_driver_t *mbd, bool mute)
 {
@@ -38,7 +39,7 @@ void mbd_tx_start (mudbus_driver_t *mbd, const uint8_t *data, uint8_t len)
 
     // Set up DMA channel for transfer
     dma_copy (mbd->dma, mbd->dma_tx_chan,
-        DMA_CCR_TEIE | DMA_CCR_PSIZE_8 | DMA_CCR_MSIZE_8 | DMA_CCR_PL_VERYHIGH,
+        DMA_CCR_TCIE | DMA_CCR_TEIE | DMA_CCR_PSIZE_8 | DMA_CCR_MSIZE_8 | DMA_CCR_PL_VERYHIGH,
         (void *)data, (void *)&mbd->usart->DR, len);
 }
 
@@ -77,7 +78,7 @@ void mbd_rx_stop (mudbus_driver_t *mbd)
 void mbd_tx_irq (mudbus_driver_t *mbd, bool enable)
 {
     if (enable)
-        USART (MB)->CR1 |= USART_CR1_TCIE;
+        mbd->usart->CR1 |= USART_CR1_TCIE;
     else
-        USART (MB)->CR1 &= ~USART_CR1_TCIE;
+        mbd->usart->CR1 &= ~USART_CR1_TCIE;
 }

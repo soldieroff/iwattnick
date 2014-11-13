@@ -32,7 +32,7 @@
 #include <stdint.h>
 
 // Include the platform-dependent library
-#ifdef MCU_stm32
+#ifdef MCU_STM32
 #include "stm32/driver.h"
 #endif
 
@@ -191,7 +191,7 @@ typedef struct
     /// Outgoing buffer length
     uint8_t outb_len;
     /// Device address on bus
-    uint8_t addr;
+    uint8_t busa;
     /// Outgoing packet buffer
     mb_packet_t outb;
     /// Incoming packet buffer
@@ -213,10 +213,10 @@ typedef struct
  * easy way to create a driver initialization routine.
  * @arg mb
  *      The MudBus object
- * @arg addr
+ * @arg busa
  *      Device bus address
  */
-extern void mb_init (mudbus_t *mb, uint8_t addr);
+extern void mb_init (mudbus_t *mb, uint8_t busa);
 
 /**
  * Check if a new packet can be sent.
@@ -259,6 +259,30 @@ extern void mb_send_frag (mudbus_t *mb, const uint8_t *data, uint8_t len);
 extern void mb_send_last (mudbus_t *mb, const uint8_t *data, uint8_t len);
 
 /**
+ * Create the header fragment of the packet and put it in the queue.
+ * @arg mb
+ *      The MudBus object
+ * @arg busa
+ *      Target device bus address
+ * @arg cmd
+ *      Command code
+ * @arg len
+ *      The length of the data field of the packet. From 1 to 16 bytes.
+ */
+extern void mb_send_hdr (mudbus_t *mb, uint8_t busa, uint8_t cmd, uint8_t len);
+
+/**
+ * Synthesize a NOfs value and put it into the outgoing buffer.
+ * @arg mb
+ *      The MudBus object
+ * @arg n
+ *      Number of bytes to read/write (0 to 14)
+ * @arg ofs
+ *      The offset in configuration address space
+ */
+extern void mb_send_nofs (mudbus_t *mb, uint8_t n, uint32_t ofs);
+
+/**
  * This function must be called from DMA IRQ handler for the channel that works
  * with USART TX at the end of transmission. The routine will initiate the
  * transmission of the next fragment, if there is any in the queue.
@@ -287,12 +311,12 @@ extern void mb_recv_next (mudbus_t *mb);
 
 /**
  * This function must be called from DMA IRQ handler for the channel that works
- * with USART RX when a DMA or USART error is detected. This will reset the
- * packet assembly logic.
+ * with USART RX when a DMA or USART error is detected, or the IDLE pseudo-char
+ * is received. This will reset the receiver.
  * @arg mb
  *      The MudBus object
  */
-extern void mb_recv_error (mudbus_t *mb);
+extern void mb_recv_reset (mudbus_t *mb);
 
 // ---------------- // User packet handling code helpers // ---------------- //
 
@@ -306,13 +330,15 @@ typedef struct
 {
     /// Area start offset (lower 12 bits), flags (upper 4 bits, see MBCAF_XXX)
     uint16_t sofs;
-    /// Area end offset (lower 12 bits) (eofs = sofs + area size)
+    /// Area end offset (lower 12 bits), eofs = sofs + area size
     uint16_t eofs;
     /** A pointer to area data (the 'const' qualifier is violated on write
      command if are is not write protected, c'est la vie) */
     const void *data;
 } mb_cas_area_t;
 
+/// Mask to extract area offset from sofs
+#define MBCAF_OFS_MASK		0x0FFF
 /// Area is write-protected
 #define MBCAF_WP		0x1000
 

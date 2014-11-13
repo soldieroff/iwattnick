@@ -18,7 +18,8 @@
 memcpy:	cbz	r2, 6f		// quit if len=0
 
 // Check if src and dest can be aligned to 4-byte boundary
-	eor	r3, r0, r1
+	eors	r3, r0, r1
+	beq	6f		// quit of src==dest
 	ands	r3, #3
 	bne	5f		// Do unaligned, byte-by-byte, copy
 
