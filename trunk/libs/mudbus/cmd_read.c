@@ -7,7 +7,6 @@
 */
 
 #include HARDWARE_H
-#include "gears.h"
 #include "mudbus.h"
 
 void mb_cmd_read (mudbus_t *mb, const mb_cas_area_t *cas, unsigned ncas)
@@ -21,18 +20,26 @@ void mb_cmd_read (mudbus_t *mb, const mb_cas_area_t *cas, unsigned ncas)
         return;
     }
 
-    nofs &= ~MB_N_MASK;
+    uint32_t ofs = nofs & MB_OFS_MASK;
 
     while (ncas)
     {
-        if ((nofs >= cas->sofs) &&
-            (nofs < cas->eofs))
+        if ((ofs >= (cas->sofs & MBCAF_OFS_MASK)) &&
+            (ofs < cas->eofs))
         {
-            //mb_send_hdr (mb->inb [1], MBC_DATA, 2 + n);
+            if (ofs + n > cas->eofs)
+                goto e_badr;
+
+            mb_send_hdr (mb, mb->inb [1], MBC_DATA, 2 + n);
+            mb_send_nofs (mb, n, ofs);
+            mb_send_last (mb, ((uint8_t *)cas->data) + ofs - (cas->sofs & MBCAF_OFS_MASK), n);
             return;
         }
 
         cas++;
         ncas--;
     }
+
+e_badr:
+    mb_cmd_error (mb, MBE_BADR, &nofs, sizeof (nofs));
 }

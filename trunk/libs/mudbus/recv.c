@@ -7,7 +7,6 @@
 */
 
 #include HARDWARE_H
-#include "gears.h"
 #include "mudbus.h"
 
 void mb_recv_next (mudbus_t *mb)
@@ -23,7 +22,7 @@ void mb_recv_next (mudbus_t *mb)
     else if (mb->inb_len == MB_HDR_LEN)
     {
         if ((mb->inb [0] != MB_BUSA_BROADCAST) &&
-            (mb->inb [0] != mb->addr))
+            (mb->inb [0] != mb->busa))
         {
             // Break the UART -> DMA link, will reset on IDLE
             mbd_rx_stop (&mb->driver);
@@ -31,12 +30,12 @@ void mb_recv_next (mudbus_t *mb)
         }
 
         // Got header, now get packet body and CRC8
-        len = (mb->inb [1] & MB_LEN_MASK) + 1 + 1;
+        len = (mb->inb [2] & MB_LEN_MASK) + 1 + 1;
     }
     else
     {
         // Got the whole packet, check the CRC8
-        len = MB_HDR_LEN + (mb->inb [1] & MB_LEN_MASK) + 1 + 1;
+        len = MB_HDR_LEN + (mb->inb [2] & MB_LEN_MASK) + 1 + 1;
         if (mb_crc8 (mb->inb, len) == 0)
         {
             mb->flags |= MBX_RX_DIGEST;
@@ -44,16 +43,15 @@ void mb_recv_next (mudbus_t *mb)
             mb->flags &= ~MBX_RX_DIGEST;
         }
 
-        // Discard the received packet, listen for the next header
-        mb->inb_len = 0;
-        len = MB_HDR_LEN;
+        // We're done, the receiver will be reset after IDLE
+        return;
     }
 
     mbd_rx_start (&mb->driver, mb->inb + mb->inb_len, len);
     mb->inb_len += len;
 }
 
-void mb_recv_error (mudbus_t *mb)
+void mb_recv_reset (mudbus_t *mb)
 {
     mbd_rx_stop (&mb->driver);
     mb->inb_len = 0;

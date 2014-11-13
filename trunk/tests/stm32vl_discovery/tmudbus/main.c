@@ -2,12 +2,14 @@
 #include "mudbus.h"
 #include "gears.h"
 
+#include <stddef.h>
+
 mudbus_t mb;
 
 #define MB_DRVINIT	mbd_init
 #define MB_USART	MBM_USART
 #define MB_VAR		mb
-#include "mudbus-stm32-gen.h"
+#include "drvgen.h"
 
 /// Device identifier
 const mb_devid_t mb_devid =
@@ -81,8 +83,9 @@ int main (void)
             ost_arm (&ost_sec, CLOCKS (1.0));
             GPIO (BLED)->ODR ^= BITV (BLED);
 
-            mb_send_frag (&mb, (uint8_t *)"@@Otest [", 9);
-            mb_send_last (&mb, (uint8_t *)"]", 1);
+            mb_send_hdr (&mb, '@', MBC_READ, 2);
+            mb_send_nofs (&mb, sizeof (mb_devid_t), MB_CASA_DEVID);
+            mb_send_last (&mb, NULL, 0);
         }
 
         // До следующего прерывания нам делать абсолютно нечего

@@ -8,14 +8,14 @@
 
 #include HARDWARE_H
 #include "mudbus.h"
-#include "gears.h"
+#include "stdfun.h"
 
-void mb_init (mudbus_t *mb, uint8_t addr)
+void mb_init (mudbus_t *mb, uint8_t busa)
 {
-    mb->addr = addr;
+    mb->busa = busa;
 
-    memclr (&mb->flags, OFFSETOF (mudbus_t, addr) - OFFSETOF (mudbus_t, flags));
+    memclr (&mb->flags, OFFSETOF (mudbus_t, busa) - OFFSETOF (mudbus_t, flags));
 
     // Set up UART & DMA to receive packets
-    mb_recv_next (mb);
+    mb_recv_reset (mb);
 }

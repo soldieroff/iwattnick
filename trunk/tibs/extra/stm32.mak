@@ -47,5 +47,5 @@ MATH.cortex-m3 = ARM_MATH_CM3
 MATH.cortex-m4 = ARM_MATH_CM4
 
 # Расскажем о типе процессора программе
-CFLAGS.DEF += -DMCU_$(MCU) -DCPU_$(call asciiup,$(CPU)) -DCORE_$(call asciiup,$(subst -,_,$(CORE))) \
-    -D$(CPUFAM) -D$(MATH.$(CORE))
+CFLAGS.DEF += -DMCU_$(call asciiup,$(MCU)) -DCPU_$(call asciiup,$(CPU)) \
+    -DCORE_$(call asciiup,$(subst -,_,$(CORE))) -D$(CPUFAM) -D$(MATH.$(CORE))
