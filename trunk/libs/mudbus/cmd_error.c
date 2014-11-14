@@ -1,5 +1,5 @@
 /*
-    MudBus READ command implementation
+    MudBus ERROR command implementation
     Copyright (C) 2014 Andrew Zabolotny All Rights Reserved
 
     This code can be freely redistributed under the terms of
