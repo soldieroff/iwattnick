@@ -37,12 +37,11 @@ void mb_user_recv (mudbus_t *mb)
             break;
 
         case MBC_READ:
-        {
             mb_cmd_read (mb, mb_cas, ARRAY_LEN (mb_cas));
             break;
-        }
 
         case MBC_WRITE:
+            mb_cmd_write (mb, mb_cas, ARRAY_LEN (mb_cas));
             break;
 
         case MBC_DATA:

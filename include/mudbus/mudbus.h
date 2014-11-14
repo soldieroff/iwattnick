@@ -352,17 +352,6 @@ typedef struct
 extern void mb_user_recv (mudbus_t *mb);
 
 /**
- * Execute the READ command (command is in the mb->inb buffer).
- * @arg mb
- *      The MudBus object
- * @arg cas
- *      A pointer to an array of CAS area descriptors.
- * @arg ncas
- *      Number of elements in the @a cas array.
- */
-extern void mb_cmd_read (mudbus_t *mb, const mb_cas_area_t *cas, unsigned ncas);
-
-/**
  * Send a ERROR command.
  * @arg mb
  *      The MudBus object
@@ -374,5 +363,30 @@ extern void mb_cmd_read (mudbus_t *mb, const mb_cas_area_t *cas, unsigned ncas);
  *      The size of additional data (<15).
  */
 extern void mb_cmd_error (mudbus_t *mb, uint8_t err, void *data, unsigned size);
+
+/**
+ * Execute the READ command (command is in the mb->inb buffer).
+ * Data from the respective CAS area is sent in a DATA packet.
+ * @arg mb
+ *      The MudBus object
+ * @arg cas
+ *      A pointer to an array of CAS area descriptors.
+ * @arg ncas
+ *      Number of elements in the @a cas array.
+ */
+extern void mb_cmd_read (mudbus_t *mb, const mb_cas_area_t *cas, unsigned ncas);
+
+/**
+ * Execute the WRITE command (command is in the mb->inb buffer).
+ * Data from packet is copied into the respective CAS area,
+ * if it is not write protected.
+ * @arg mb
+ *      The MudBus object
+ * @arg cas
+ *      A pointer to an array of CAS area descriptors.
+ * @arg ncas
+ *      Number of elements in the @a cas array.
+ */
+extern void mb_cmd_write (mudbus_t *mb, const mb_cas_area_t *cas, unsigned ncas);
 
 #endif // __MUDBUS_H__
