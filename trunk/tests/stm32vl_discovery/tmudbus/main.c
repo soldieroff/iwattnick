@@ -68,6 +68,7 @@ int main (void)
 
     // Инициализация MudBus Master'а
     mbd_init (&mb.driver);
+    mb.recv = mb_user_recv;
     mb_init (&mb, '@');
 
     // Настроим и включим прерывания
