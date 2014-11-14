@@ -6,6 +6,20 @@ GNU General Public License, version 3, which can be found here:
 
     http://www.gnu.org/licenses/licenses.html
 
+The iWattnick libraries which can be found in the `libs' and `include'
+directories are licensed under the terms of the GNU Less General
+Public License, version 3, which can be found on the same Web page.
+They contain a explicit GNU LGPL v3 mark in their header comment.
+
+Date and time conversion routines in libs/gears/datetime.c are public domain code,
+taken from:
+
+    http://stackoverflow.com/questions/1274964/how-to-decompose-unix-time-in-c
+
+The tiny s/printf implementation is LGPL code:
+
+    Copyright (C) 2004 Kustaa Nyholm
+
 
 CMSIS library
 -------------
@@ -35,12 +49,3 @@ is licensed under MCD-ST Liberty SW License Agreement V2.
 You may obtain a copy of the License at:
 
     http://www.st.com/software_license_agreement_liberty_v2
-
-Date and time conversion routines in libs/gears/datetime.c are public domain code,
-taken from:
-
-    http://stackoverflow.com/questions/1274964/how-to-decompose-unix-time-in-c
-
-The tiny s/printf implementation is LGPL code:
-
-    Copyright (C) 2004 Kustaa Nyholm

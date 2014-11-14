@@ -38,6 +38,8 @@
 
 /// The broadcast MudBus bus address
 #define MB_BUSA_BROADCAST	0x00
+/// Recommended bus master address
+#define MB_BUSA_MASTER		0x01
 
 /// Configuration Address Space (CAS) addresses
 #define MB_CASA_DEVID		0xFFF
@@ -152,27 +154,16 @@ typedef struct
 /// Create a version number from (hi,lo) parts
 #define MB_VERSION(h,l)		(((h & 0x0F) << 4) | (l & 0x0F))
 
-/**
- * Compute the CRC8 of a data block.
- * @arg data
- *      A pointer to data
- * @arg len
- *      The length of data
- * @return
- *      The computed CRC8
- */
-extern uint8_t mb_crc8 (uint8_t *data, int len);
+typedef struct _mudbus_t mudbus_t;
 
 /**
- * Update the CRC8 value with a new data byte.
- * @arg crc8
- *      The previous value of CRC8
- * @arg c
- *      The incoming character
- * @return
- *      The updated CRC8
+ * When the master receives a packet, its CRC is checked and if the packet
+ * is ok, this user-supplied function is invoked. The whole packet is in the
+ * mb->inb array and the length is in mb->inb_len.
+ * @arg mb
+ *      The MudBus object
  */
-extern uint8_t mb_crc8_update (uint8_t crc8, uint8_t c);
+typedef void (*mb_recv_func_t) (mudbus_t *mb);
 
 /// This array can hold any legal MudBus packet
 typedef uint8_t mb_packet_t [3 + 16 + 1];
@@ -180,10 +171,12 @@ typedef uint8_t mb_packet_t [3 + 16 + 1];
 /**
  * This structure holds the whole state of the MudBus master interface.
  */
-typedef struct
+typedef struct _mudbus_t
 {
     /// The platform-dependent driver
     mudbus_driver_t driver;
+    /// User fills the address of the receive function
+    mb_recv_func_t recv;
     /// MudBus state flags (see MBF_XXX)
     uint8_t flags;
     /// Length of valid data in incoming buffer
@@ -343,15 +336,6 @@ typedef struct
 #define MBCAF_WP		0x1000
 
 /**
- * When the master receives a packet, its CRC is checked and if the packet
- * is ok, this user-supplied function is invoked. The whole packet is in the
- * mb->inb array and the length is in mb->inb_len.
- * @arg mb
- *      The MudBus object
- */
-extern void mb_user_recv (mudbus_t *mb);
-
-/**
  * Send a ERROR command.
  * @arg mb
  *      The MudBus object
@@ -388,5 +372,27 @@ extern void mb_cmd_read (mudbus_t *mb, const mb_cas_area_t *cas, unsigned ncas);
  *      Number of elements in the @a cas array.
  */
 extern void mb_cmd_write (mudbus_t *mb, const mb_cas_area_t *cas, unsigned ncas);
+
+/**
+ * Compute the CRC8 of a data block.
+ * @arg data
+ *      A pointer to data
+ * @arg len
+ *      The length of data
+ * @return
+ *      The computed CRC8
+ */
+extern uint8_t mb_crc8 (uint8_t *data, int len);
+
+/**
+ * Update the CRC8 value with a new data byte.
+ * @arg crc8
+ *      The previous value of CRC8
+ * @arg c
+ *      The incoming character
+ * @return
+ *      The updated CRC8
+ */
+extern uint8_t mb_crc8_update (uint8_t crc8, uint8_t c);
 
 #endif // __MUDBUS_H__

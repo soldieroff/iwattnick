@@ -39,7 +39,7 @@ void mb_recv_next (mudbus_t *mb)
         if (mb_crc8 (mb->inb, len) == 0)
         {
             mb->flags |= MBX_RX_DIGEST;
-            mb_user_recv (mb);
+            mb->recv (mb);
             mb->flags &= ~MBX_RX_DIGEST;
         }
 

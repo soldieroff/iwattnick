@@ -38,11 +38,6 @@ typedef struct
 } mudbus_driver_t;
 
 /**
- * Initialize MudBus Master low-level driver.
- */
-extern void mbd_master_init (mudbus_driver_t *mbd);
-
-/**
  * Mute the output on TX pin. When TX is muted, the USART output does
  * not change TX pin state, otherwise it works as usual. This is a very
  * handy mode to count off timeouts defined in USART character frames.
