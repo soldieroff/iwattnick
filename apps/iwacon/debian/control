@@ -1,0 +1,15 @@
+Source: iwacon
+Section: electronics
+Priority: optional
+Maintainer: Andrew Zabolotny <zapparello@gmail.com>
+Build-Depends-Indep: debhelper (>= 4.2.28), python-central (>= 0.4.7), cdbs (>= 0.4.49)
+XS-Python-Version: all
+Standards-Version: 3.7.2
+
+Package: iwacon
+Architecture: all
+Depends: ${python:Depends}, python-gtk2, python-serial
+XB-Python-Version: ${python:Versions}
+Description: iwacon the configuration tool for iWattnick
+ This tool allows to configure and debug problems in the iWattnick
+ on-board computer for e-bikes, e-scooters and e-motorcycles.

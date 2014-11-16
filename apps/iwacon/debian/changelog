@@ -1,0 +1,5 @@
+iwacon (0.2.1-1) lucid; urgency=low
+
+  * Added the files required to build packages for Fedora and Ubuntu
+
+ -- Andrew Zabolotny <zapparello@gmail.com>  Sun Nov 14 23:38:06 MSK 2014

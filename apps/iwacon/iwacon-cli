@@ -1,0 +1,431 @@
+#!/usr/bin/python
+# coding: utf-8
+
+import sys, locale
+import time, math
+import exceptions, traceback
+import datetime
+import struct
+import serial
+from optparse import OptionParser;
+
+# Не используем инфраструктуру перевода
+import __builtin__
+__builtin__.__dict__['_'] = unicode
+
+import iwattnick
+from iwattnick.dev import *
+from iwattnick.iwaif import *
+from iwattnick.fp import *
+from iwattnick.util import *
+
+# famous worldwide known hack - fuck python developers
+reload (sys)
+sys.setdefaultencoding (locale.getpreferredencoding ())
+
+# If we have readline, use it
+try:
+    import readline
+except:
+    pass
+
+
+def is_cmd (cmd, tpl, minlen):
+    if len (cmd) > len (tpl):
+        return False
+    if len (cmd) < minlen:
+        return False
+    tpl = tpl [0:len (cmd)].lower ()
+    return tpl == cmd
+
+
+class Application:
+    def __init__ (self, opts, args):
+        sys.stdout.write ("iwacon версия %s, открываем порт %s\n" % (iwattnick.VERSION, opts.port))
+
+        try:
+            self.dev = iwattnick.dev.Open (opts.port)
+        except ValueError, e:
+            self.abort ("%s\n" % str (e))
+        except:
+            self.abort ("\n".join (traceback.format_exception (*sys.exc_info ())))
+
+        self.sel_busa = IWA_BUSA_SLAVE
+        self.sel_cas = CAS_IWATTNICK
+
+
+    def abort(self, msg):
+        sys.stderr.write (msg)
+        sys.exit (-1)
+
+
+    def parse_dev (self, dev):
+        x = dev.lower ().split ('-')
+        if is_cmd (x [0], "iwattnick", 2):
+            del x [0]
+            cas = CAS_IWATTNICK
+            if len (x) == 0:
+                x.extend (["%d" % IWA_BUSA_SLAVE])
+        elif is_cmd (x [0], "any", 2):
+            del x [0]
+            cas = CAS_ANY
+            if len (x) == 0:
+                x.extend (["0"])
+        else:
+            return None, None
+
+        if len (x) != 1:
+            return None, None
+
+        busa = int (x [0])
+
+        return cas, busa
+
+
+    def packet_display (self, data):
+        if (data [2] & MB_CMD_MASK) == MBC_ERROR:
+            dump ("[%02x ERROR] %02x -> %02x, код %d:" % \
+                (data [2], data [1], data [0], data [3]), data [4:-1])
+        elif (data [2] & MB_CMD_MASK) == MBC_READ:
+            nofs = struct.unpack ("<H", str (data [3:5]))
+            dump ("[%02x READ] %02x -> %02x, смещение %d длина %d:" % \
+                (data [2], data [1], data [0], nofs [0] & 0xfff, nofs [0] >> 12), data [5:-1])
+        elif (data [2] & MB_CMD_MASK) == MBC_WRITE:
+            nofs = struct.unpack ("<H", str (data [3:5]))
+            dump ("[%02x WRITE] %02x -> %02x, смещение %d длина %d:" % \
+                (data [2], data [1], data [0], nofs [0] & 0xfff, nofs [0] >> 12), data [5:-1])
+        elif (data [2] & MB_CMD_MASK) == MBC_DATA:
+            nofs = struct.unpack ("<H", str (data [3:5]))
+            dump ("[%02x DATA] %02x -> %02x, смещение %d длина %d:" % \
+                (data [2], data [1], data [0], nofs [0] & 0xfff, nofs [0] >> 12), data [5:-1])
+        elif (data [2] & MB_CMD_MASK) == MBC_EXEC:
+            dump ("[%02x EXEC] %02x -> %02x, функция %d:" % \
+                (data [2], data [1], data [0], data [3]), data [4:-1])
+        return
+
+
+    def nofs (self, ofs, n):
+        if n > MB_N_MAX:
+            raise ValueError ("Количество байт не должно превышать %d" % MB_N_MAX)
+        if ofs > MB_OFS_MASK:
+            raise ValueError ("Смещение не должно превышать %d" % MB_OFS_MASK)
+        return bytearray ([ofs & 0xff, ((ofs >> 8) & 0xf) | (n << 4)])
+
+
+    def read (self, args, fields):
+        cas, busa = self.prep (args, "read {УСТР}")
+
+        if busa is None:
+            raise ValueError (hlp)
+
+        retv = AttrStorage ()
+        for casa in cas:
+            for ofs,n,d in casa.Iterate (fields, MB_MAX_DATA_LEN - 2):
+                cmd = self.dev.Build (busa, MBC_READ, self.nofs (ofs, n))
+
+                answer = self.dev.Transact (cmd)
+                if (answer is None) or (len (answer) != MB_HEADER_LEN + 2 + n + 1):
+                    self.packet_display (answer)
+                    raise ValueError ("получен неверный ответ на команду READ")
+
+                v = casa.Unpack (answer [MB_HEADER_LEN + 2:-1], fields)
+                retv.update (v)
+
+        return retv
+
+
+    def cmd_help (self):
+        sys.stdout.write ("""Программа понимает следующие команды:
+help           : показать этот текст
+exit           : покинуть программу
+debug {0..7}   : вывод входящих (+1), исходящих (+2), мусорных (+4) пакетов
+select {A}     : выбрать для дальнейшей работы устройство A
+info {A}       : посмотреть базовую информацию о выбранном устройстве
+send {A} D     : отправить пакет устройству (D = xx xx xx xx)
+read {A} O L   : прочитать содержимое КАП по смещению O длиной L байт
+write {A} O D  : записать данные D (xx xx...) по смещению O
+exec {A} F D   : выполнить функцию F с параметрами (D = xx xx xx xx)
+list {A}       : просмотреть список полей в КАП устройства
+
+В большинстве команд адрес {A} устройства является опциональным параметром.
+Если он не указан, то используется последнее выбранное командой 'select'
+устройство. Адрес состоит из трёх частей, разделённых дефисом:
+
+Тип устройства : Одно из 'iwattnick' или 'any'. Определяет из какого справочника
+                 берутся смещения полей (если ссылаться на поля по названиям).
+                 Если не задан, используется 'any'. Можно сокращать до двух букв.
+Адрес          : Шестнадцатиричный адрес устройства, или 0 для широковещательного вещания.
+
+Примеры адресации:
+any            : любое устройство (эквивалентно any-0)
+iw-40          : ведущее устройство типа iWattnick с адресом 0x40
+
+Смещение (O) (и иногда следующая за ним длина L) могут быть заданы как
+непосредственно числами, так и названием поля в КАП устройства. Список
+полей можно посмотреть командой 'list'.
+""")
+
+
+    def prep (self, args, hlp):
+        if len (args) == 0:
+            cas = None
+        else:
+            cas, busa = self.parse_dev (args [0])
+
+        if cas is None:
+            if self.sel_busa is None:
+                raise ValueError (hlp)
+            cas = self.sel_cas
+            busa = self.sel_busa
+        else:
+            del args [0]
+
+        return cas, busa
+
+
+    def cmd_select (self, args):
+        self.sel_cas, self.sel_busa = self.prep (args, "select {УСТР}")
+
+        if self.sel_busa is None:
+            raise ValueError ("Устройство не выбрано")
+
+        sys.stdout.write ("Выбрано устройство %d\n" % self.sel_busa)
+
+
+    def cmd_info (self, args):
+        info = self.read (args, [ "version", "mid", "pid", "tid" ]);
+        if not (info is None):
+            info ['version_hi'] = (info.version >> 4) & 0x0f
+            info ['version_lo'] = info.version & 0x0f
+            info ['mid_str'] = MID2STR.get (chr (info.mid), "???")
+            info ['pid_str'] = PID2STR.get (chr (info.mid) + chr (info.pid), "???")
+            info ['tid_str'] = TID2STR.get (chr (info.tid), "???")
+            sys.stdout.write ("""Информация о устройстве:
+Версия прошивки:                   %(version_hi)d.%(version_lo)d
+Идентификатор производителя (MID): %(mid)02X (%(mid_str)s)
+Идентификатор устройства (PID):    %(pid)02X (%(pid_str)s)
+Идентификатор типа (TID):          %(tid)02X (%(tid_str)s)
+""" % info)
+
+
+    def cmd_send (self, args):
+        hlp = "send {УСТР} [ДАННЫЕ...]"
+        cas, busa = self.prep (args, hlp)
+
+        if (len (args) < 1) or (busa is None):
+            raise ValueError (hlp)
+
+        data = bytearray ()
+        for x in args:
+            data.append (int (x, 16))
+
+        if len (data) > MB_MAX_PACKET_LEN - 1:
+            raise ValueError ("Длина пакета не должна превышать %d байт (получилось %d)!" % \
+                (MB_MAX_PACKET_LEN - 1, len (data)))
+
+        if self.dev.debug & 2:
+            dump ("Отправляем пакет:", data)
+
+        answer = self.dev.Transact (data)
+
+        if answer != None:
+            self.packet_display (answer)
+
+
+    def cmd_exec (self, args):
+        hlp = "exec {УСТР} [ФУНКЦИЯ] {АРГУМЕНТЫ...}"
+        cas,busa = self.prep (args, hlp)
+
+        if (len (args) < 1) or (busa is None):
+            raise ValueError (hlp)
+
+        data = bytearray ()
+        # Десятичный номер функции
+        data.append (int (args [0], 10))
+        # И шестнадцатиричные аргументы
+        for i in range (1, len (args)):
+            data.append (int (args [i], 16))
+
+        cmd = self.dev.Build (busa, MBC_EXEC, data)
+        if len (cmd) > MB_MAX_PACKET_LEN - 1:
+            raise ValueError ("Слишком длинная команда (%d > %d байт)" % \
+                (len (cmd), MB_MAX_PACKET_LEN - 1))
+
+        answer = self.dev.Transact (data)
+
+        if answer != None:
+            self.packet_display (answer)
+
+
+    def common_rw (self, args, cmdcode, hlp):
+        hlp = "%s {УСТР} {ПОЛЕ1 {ПОЛЕ2 ...}} [СМЕЩЕНИЕ] [ДЛИНА]" % hlp
+        cas, busa = self.prep (args, hlp)
+
+        if (len (args) < 1) or (busa is None):
+            raise ValueError (hlp)
+
+        while len (args):
+            try:
+                if len (args) < 2:
+                    raise ValueError ()
+                ofs = int (args [0])
+                if cmdcode == MBC_READ:
+                    n = int (args [1])
+                    del args [:2]
+                else:
+                    del args [0]
+                    n = len (args)
+
+            except ValueError:
+                for casa in cas:
+                    ofs, n, nf = casa.NOfs (args)
+                    if nf != 0:
+                        break
+                if nf == 0:
+                    raise ValueError ("Не удалось распознать смещение")
+                del args [:nf]
+
+            data = bytearray ()
+            data.extend (self.nofs (ofs, n))
+
+            if cmdcode == MBC_READ:
+                print "Чтение %d байт по смещению %d" % (n, ofs)
+
+            elif cmdcode == MBC_WRITE:
+                bytes = 0
+                try:
+                    while len (args):
+                        data.append (int (args [0], 16))
+                        del args [0]
+                        bytes += 1
+
+                except ValueError:
+                    pass
+
+                if bytes != n:
+                    raise ValueError ("Количество данных не соответствует суммарной длине полей")
+
+                print "Запись %d байт по смещению %d" % (n, ofs)
+
+            cmd = self.dev.Build (busa, cmdcode, data)
+            if len (cmd) > MB_MAX_PACKET_LEN - 1:
+                raise ValueError ("Слишком длинная команда (%d > %d байт)" % \
+                    (len (cmd), MB_MAX_PACKET_LEN - 1))
+
+            answer = self.dev.Transact (cmd)
+
+            if answer != None:
+                self.packet_display (answer)
+
+        return
+
+
+    def cmd_read (self, args):
+        self.common_rw (args, MBC_READ, "read")
+
+
+    def cmd_write (self, args):
+        self.common_rw (args, MBC_WRITE, "write")
+
+
+    def cmd_debug (self, args):
+        if len (args) != 1:
+            raise ValueError ("debug [0..7]")
+
+        self.dev.debug = int (args [0])
+
+
+    def cmd_list (self, args):
+        cas,busa = self.prep (args, "list {УСТР}")
+
+        print " Смещение |    Тип    | Имя поля"
+        print "----------+-----------+----------"
+        for casa in cas:
+            o = casa.base
+            for x in casa.fields:
+                if x [1] == 'I':
+                    t = u"Б/ЗН ЦЕЛ 32"
+                    s = 4
+                elif x [1] == 'i':
+                    t = u"ЗНАК ЦЕЛ 32"
+                    s = 4
+                elif x [1] == 'H':
+                    t = u"Б/ЗН ЦЕЛ 16"
+                    s = 2
+                elif x [1] == 'h':
+                    t = u"ЗНАК ЦЕЛ 16"
+                    s = 2
+                elif x [1] == 'B':
+                    t = u"Б/ЗН БАЙТ"
+                    s = 1
+                elif x [1] == 'b':
+                    t = u"ЗНАК БАЙТ"
+                    s = 1
+                print "%9d |%-11s|%s" % (o, t, x [0])
+                o += s
+
+
+    def main (self):
+        while True:
+            try:
+                cmd = raw_input ("# ").split ()
+                if len (cmd) < 1:
+                    continue
+            except exceptions.EOFError:
+                sys.stdout.write ("^D\n")
+                break
+            except KeyboardInterrupt:
+                sys.stdout.write ("\n")
+                # Игнорируем Ctrl+C (выходим по EXIT либо Ctrl+D)
+                continue
+
+            cmd [0] = cmd [0].lower ()
+            try:
+                if is_cmd (cmd [0], 'help', 1):
+                    self.cmd_help ()
+                elif is_cmd (cmd [0], 'select', 3):
+                    self.cmd_select (cmd [1:])
+                elif is_cmd (cmd [0], 'info', 1):
+                    self.cmd_info (cmd [1:])
+                elif is_cmd (cmd [0], 'send', 3):
+                    self.cmd_send (cmd [1:])
+                elif is_cmd (cmd [0], 'read', 1):
+                    self.cmd_read (cmd [1:])
+                elif is_cmd (cmd [0], 'write', 1):
+                    self.cmd_write (cmd [1:])
+                elif is_cmd (cmd [0], 'exec', 1):
+                    self.cmd_exec (cmd [1:])
+                elif is_cmd (cmd [0], 'exit', 3):
+                    break
+                elif is_cmd (cmd [0], 'debug', 3):
+                    self.cmd_debug (cmd [1:])
+                elif is_cmd (cmd [0], 'list', 2):
+                    self.cmd_list (cmd [1:])
+                else:
+                    sys.stdout.write ("Unrecognized command `%s'\n" % cmd [0])
+                    self.cmd_help ()
+
+            except serial.serialutil.SerialException, e:
+                sys.stdout.write ("Ошибка коммуникации: %s\n" % str (e))
+
+            except ValueError, e:
+                sys.stdout.write ("%s\n" % str (e))
+
+            except KeyboardInterrupt:
+                # выполнение команды прервано
+                sys.stdout.write ("\n")
+
+            except:
+                #sys.stdout.write ("Ошибка: %s\n" % str (sys.exc_info () [1]))
+                sys.stdout.write ("\n".join (traceback.format_exception (*sys.exc_info ())))
+
+
+op = OptionParser (usage="%prog {options}",
+                   version="%prog " + iwattnick.VERSION)
+op.add_option("-p", "--port", dest="port", default="/dev/ttyUSB0",
+    help="общаться с iWattnick через порт PORT", metavar="PORT")
+
+(opts, args) = op.parse_args ()
+
+app = Application (opts, args)
+app.main ()

@@ -10,13 +10,10 @@
 #define __IWATTNICK_H__
 
 #include HARDWARE_H
+#include "iwaif.h"
 #include "gears.h"
 
-#define IW_VERSION_HI		0
-#define IW_VERSION_LO		1
-
-/// Our address on the slave MudBus
-#define MUDBUS_BUSA_SLAVE	'@'
+extern iwa_config_t iwa_config;
 
 extern void hardware_init ();
 extern void mudbus_init ();

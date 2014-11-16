@@ -137,18 +137,18 @@ enum
 
 /**
  * The standard configuration address space structure
- * at offset MB_BUSA_DEVID.
+ * at offset MB_CASA_DEVID.
  */
 typedef struct
 {
     /// firmware version, 4.4 hi/lo
-    uint8_t Version;
+    uint8_t version;
     /// Manufacturer ID
-    uint8_t MID;
+    uint8_t mid;
     /// Product ID
-    uint8_t PID;
+    uint8_t pid;
     /// Type ID
-    uint8_t TID;
+    uint8_t tid;
 } PACKED mb_devid_t;
 
 /// Create a version number from (hi,lo) parts
