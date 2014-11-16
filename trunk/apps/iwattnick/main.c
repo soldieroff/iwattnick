@@ -8,6 +8,8 @@
 
 #include "iwattnick.h"
 
+iwa_config_t iwa_config;
+
 int main (void)
 {
     hardware_init ();

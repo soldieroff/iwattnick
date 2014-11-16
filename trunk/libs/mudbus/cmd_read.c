@@ -16,7 +16,7 @@ void mb_cmd_read (mudbus_t *mb, const mb_cas_area_t *cas, unsigned ncas)
 
     if (n > MB_N_MAX)
     {
-        mb_cmd_error (mb, MBE_2BIG, &nofs, sizeof (nofs));
+        mb_cmd_error (mb, MBE_2BIG, &nofs, 2);
         return;
     }
 
@@ -41,5 +41,5 @@ void mb_cmd_read (mudbus_t *mb, const mb_cas_area_t *cas, unsigned ncas)
     }
 
 e_badr:
-    mb_cmd_error (mb, MBE_BADR, &nofs, sizeof (nofs));
+    mb_cmd_error (mb, MBE_BADR, &nofs, 2);
 }

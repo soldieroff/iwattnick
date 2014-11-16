@@ -12,3 +12,6 @@ HARDWARE = iwattnick
 #STM32_MIN_HEAP_SIZE = 0
 # Если нужно, можно переопределить минимальный размер стека (проверяется при линковке)
 #STM32_MIN_STACK_SIZE = 0x200
+
+# Uncomment to allow building stock STM32VL-DISCOVERY examples
+#STOCK_EXAMPLES = 1

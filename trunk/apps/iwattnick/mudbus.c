@@ -13,7 +13,7 @@
 static const mb_devid_t mb_devid =
 {
     /// firmware version, 4.4 hi/lo
-    MB_VERSION (IW_VERSION_HI, IW_VERSION_LO),
+    MB_VERSION (IWA_VERSION_HI, IWA_VERSION_LO),
     /// Manufacturer ID
     MBMID_ZAP,
     /// Product ID
@@ -25,6 +25,7 @@ static const mb_devid_t mb_devid =
 /// CAS area descriptors
 static const mb_cas_area_t mb_cas [] =
 {
+    { 0, sizeof (iwa_config), &iwa_config },
     { MB_CASA_DEVID | MBCAF_WP, MB_CASA_DEVID + sizeof (mb_devid), &mb_devid },
 };
 
@@ -53,6 +54,11 @@ static void mb_recv (mudbus_t *mb)
             break;
 
         case MBC_EXEC:
+            switch (mb->inb [3])
+            {
+                case MBF_RESET:
+                    break;
+            }
             break;
     }
 }
@@ -80,7 +86,7 @@ mudbus_t mbs;
 void mudbus_init ()
 {
     mbd_slave_init (&mbm.driver);
-    mb_init (&mbs, MUDBUS_BUSA_SLAVE);
+    mb_init (&mbs, IWA_BUSA_SLAVE);
     mbs.recv = mb_recv;
 
     mbd_master_init (&mbs.driver);

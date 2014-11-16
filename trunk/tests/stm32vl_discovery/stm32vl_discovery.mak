@@ -2,5 +2,8 @@
 
 ifeq ($(HARDWARE),stm32vl_discovery)
 DIR.INCLUDE.C += :tests/stm32vl_discovery
-include $(wildcard tests/stm32vl_discovery/*/*.mak) $(wildcard tests/stm32vl_discovery/examples/*/*.mak)
+include $(wildcard tests/stm32vl_discovery/*/*.mak)
+ifdef STOCK_EXAMPLES
+include $(wildcard tests/stm32vl_discovery/examples/*/*.mak)
+endif
 endif

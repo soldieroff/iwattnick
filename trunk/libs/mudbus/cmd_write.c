@@ -61,5 +61,5 @@ void mb_cmd_write (mudbus_t *mb, const mb_cas_area_t *cas, unsigned ncas)
     err = MBE_BADR;
 
 error:
-    mb_cmd_error (mb, err, &nofs, sizeof (nofs));
+    mb_cmd_error (mb, err, &nofs, 2);
 }

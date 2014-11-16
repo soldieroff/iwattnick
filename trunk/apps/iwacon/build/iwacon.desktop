@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=iWaCon
+GenericName=iWattnick configurator
+GenericName[ru]=Редактор конфигурации iWattnick
+Exec=iwacon
+TryExec=iwacon
+Terminal=false
+Type=Application
+Icon=iwacon
+Categories=GTK;Electronics;Engineering;
+StartupNotify=true
