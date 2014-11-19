@@ -15,6 +15,11 @@
  *      Interrupt Controller (NVIC).
  */
 
+#include "useful.h"
+
+/// Return the IRQ priority corresponding to this hardware feature
+#define IRQ_PRIO(x)		JOIN2(x, _IRQ_PRIO)
+
 /**
  * Set up the interrupt controller to handle the given IRQ.
  * Note that this does not include first 16 faults, which have

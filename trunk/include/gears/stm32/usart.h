@@ -21,6 +21,17 @@ extern "C" {
 
 #include "useful.h"
 
+#define __CMP_USART1		99980
+#define __CMP_USART2		99981
+#define __CMP_USART3		99982
+#define __CMP_USART4		99983
+#define __CMP_USART5		99984
+
+/// Return the USART instance corresponding to a hardware feature (e.g. USART(DEBUG) -> USART3)
+#define USART(x)		JOIN2 (USART, JOIN2(x, _USART))
+/// Check if the USART of a hw feature is same as expected (p = 1, 2 etc)
+#define USART_CMP(x,p)		(JOIN2 (__CMP_USART, JOIN2 (x, _USART)) == JOIN2(__CMP_USART, p))
+
 /// 8 bit characters
 #define USART_CHARBITS_8	0x00000000
 /// 9 bit characters

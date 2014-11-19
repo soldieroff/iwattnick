@@ -75,6 +75,25 @@
 #define USART2_RX_DMA_CHAN	6
 #define USART2_RX_DMA_IRQ_PRIO	0
 
+// Where we have connected the LCD based on the ST7567 controlled in SPI mode
+#define ST7567_SPI		1
+
+// Chip Select /CS
+#define ST7567_CS_PORT		B
+#define ST7567_CS_BIT		0
+// Reset /RES
+#define ST7567_RES_PORT		B
+#define ST7567_RES_BIT		1
+// Register Select RS (A0) (0 = instruction, 1 = data)
+#define ST7567_RS_PORT		B
+#define ST7567_RS_BIT		2
+// Serial clock SCK
+#define ST7567_SCK_PORT		B
+#define ST7567_SCK_BIT		3
+// Serial data SDA (MOSI)
+#define ST7567_SDA_PORT		B
+#define ST7567_SDA_BIT		5
+
 // That's all we have, folks!
 
 #endif // __HARDWARE_H__
