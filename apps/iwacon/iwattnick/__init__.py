@@ -8,7 +8,7 @@ import locale
 
 VERSION = "0.0.1"
 
-# Detect filename encoding: this exactly mimics the behaviour of glib
+# Detect filename encoding: this exactly mimics glib behavior
 FNENC = os.getenv ("G_FILENAME_ENCODING")
 if not FNENC:
     if os.getenv ("G_BROKEN_FILENAMES") or os.name == "nt":

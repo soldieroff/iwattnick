@@ -16,6 +16,17 @@
  *      by setting the appropiate bits RCC_AHBENR_DMA?EN in RCC->AHBENR.
  */
 
+#include "useful.h"
+
+/// Return the DMA controller number (1, 2, ...) given hardware feature name
+#define DMA_NUM(x)		JOIN2(x, _DMA_NUM)
+/// Return the DMA channel number (1-7) given hardware feature name
+#define DMA_CHAN(x)		JOIN2(x, _DMA_CHAN)
+/// Return the IRQ number corresponding to this DMA channel
+#define DMA_IRQ(x)		JOIN5(DMA, DMA_NUM(x), _Channel, DMA_CHAN (x), _IRQn)
+/// Return the DMA IRQ priority corresponding to this hardware feature
+#define DMA_IRQ_PRIO(x)		JOIN2(x, _DMA_IRQ_PRIO)
+
 /// Universal DMA flags (all chans use same defs, so why bother to have different...)
 
 #define  DMA_CCR_EN		DMA_CCR1_EN			/*!< Channel enable*/

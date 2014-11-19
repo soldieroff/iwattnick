@@ -19,9 +19,6 @@
  *      declare the on-board hardware connections.
  */
 
-// This always comes for free
-#include "macros.h"
-
 // Leave just the line corresponding to your board MCU
 //#include "stm32f0xx.h"
 //#include "stm32f10x.h"
