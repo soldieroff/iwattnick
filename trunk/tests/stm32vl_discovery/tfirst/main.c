@@ -5,7 +5,7 @@
  * Правда, размер в два с лишним раза меньше :)
  */
 
-#include HARDWARE_H
+#include "stm32vl_discovery.h"
 #include "gears.h"
 
 int main ()
@@ -16,6 +16,8 @@ int main ()
 
     // --- GPIOs (defined in hardware*.h) --- //
 
+    clock_init ();
+
     // Включим тактирование GPIO для обоих светодиодов и кнопки
     RCC->APB2ENR |=
         JOIN3 (RCC_APB2ENR_IOP, PORT (GLED), EN) |
@@ -24,7 +26,7 @@ int main ()
 #if !PORTS_CMP (GLED, BLED)
 #error "Expected GLED and BLED on same port!"
 #endif
-    *GPIO_CR (GLED) = GPIO_SET (GPIO_SET (*GPIO_CR (GLED),
+    *GPIO_CR (GLED) = GPIO_CONFIGURE (GPIO_CONFIGURE (*GPIO_CR (GLED),
         GLED, OUTPUT_2MHz, PUSHPULL),
         BLED, OUTPUT_2MHz, PUSHPULL);
 
@@ -32,7 +34,7 @@ int main ()
     GPIO (GLED)->BRR = BITV (GLED) | BITV (BLED);
 
     // Настроим GPIO для кнопки - INPUT Z-state
-    *GPIO_CR (USRBUT) = GPIO_SET (*GPIO_CR (USRBUT),
+    *GPIO_CR (USRBUT) = GPIO_CONFIGURE (*GPIO_CR (USRBUT),
         USRBUT, INPUT, FLOATING);
 
     uint32_t counter = 0, speed = 0;
@@ -53,18 +55,18 @@ int main ()
                 // If pressed, light the blue LED
                 if (bst)
                 {
-                    GPIO_BSET (BLED);
+                    GPIO_SET (BLED);
                     speed = (speed + 1) & 3;
                 }
                 else
-                    GPIO_BRESET (BLED);
+                    GPIO_RESET (BLED);
             }
 
             counter++;
             if (counter & ((32/8) << speed))
-                GPIO_BSET (GLED);
+                GPIO_SET (GLED);
             else
-                GPIO_BRESET (GLED);
+                GPIO_RESET (GLED);
         }
 
         // До следующего прерывания нам делать абсолютно нечего

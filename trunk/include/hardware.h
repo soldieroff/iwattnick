@@ -58,11 +58,11 @@
  *      // Set the bit output in port
  *      GPIO (HWFN)->BSRR = BITV (HWFN);
  *      // Same but simpler
- *      GPIO_BSET (HWFN);
+ *      GPIO_SET (HWFN);
  *      // Get the port state
  *      if (GPIO (HWFN)->IDR & BITV (HWFN)) ...
  *      // Set up the GPIO mode for the pin
- *      *GPIO_CR (HWFN) = GPIO_SET (*GPIO_CR (HWFN), HWFN, OUTPUT_50MHz, PUSHPULL);
+ *      *GPIO_CR (HWFN) = GPIO_CONFIGURE (*GPIO_CR (HWFN), HWFN, OUTPUT_50MHz, PUSHPULL);
  *
  *      // DMA stuff ... clear global interrupt flag for the channel
  *      DMA->IFCR = DMA_IFCR (UART1_TX, CGIF);

@@ -22,5 +22,6 @@
 #include "nvic.h"
 #include "rtc.h"
 #include "usart.h"
+#include "spi.h"
 
 #endif /* __MACROS_H__ */

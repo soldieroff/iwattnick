@@ -92,7 +92,7 @@ void MB_DRVINIT (mudbus_driver_t *mbd)
     mbd->usart = USART (MB);
     mbd->dma = DMA (MB_USART_TX);
 
-    // Включим питание контроллеру DMA1
+    // Включим тактирование контроллера DMA
     RCC->AHBENR |= JOIN3 (RCC_AHBENR_DMA, DMA_NUM (MB_USART_TX), EN);
 
     // Enable clocking GPIO, USART and AFIO
@@ -100,7 +100,7 @@ void MB_DRVINIT (mudbus_driver_t *mbd)
     RCC->APB1ENR |= MB_APB1ENR_BITS;
 
     // Set the output bit on TX to enable pull-up when we're in mute mode
-    GPIO_BSET (MB_USART_TX);
+    GPIO_SET (MB_USART_TX);
 
     mbd->gpio_tx_cr = GPIO_CR (MB_USART_TX);
     mbd->gpio_tx_bit = BIT (MB_USART_TX);
@@ -109,7 +109,7 @@ void MB_DRVINIT (mudbus_driver_t *mbd)
 
     // Initialize RX and TX
     mbd_tx_mute (mbd, false);
-    *GPIO_CR (MB_USART_RX) = GPIO_SET (
+    *GPIO_CR (MB_USART_RX) = GPIO_CONFIGURE (
         *GPIO_CR (MB_USART_RX), MB_USART_RX, INPUT, FLOATING);
 
     // Initialize the USART

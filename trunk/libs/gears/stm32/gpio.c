@@ -31,6 +31,19 @@ void gpio_config (uint16_t conf)
     uint32_t m = ~((GPIO_MODE_MASK | GPIO_CNF_MASK) << ((b & 7) * 4));
 
     GPIO_TypeDef *gpio = (GPIO_TypeDef *)(GPIOA_BASE + (GPIOB_BASE - GPIOA_BASE) * p);
+
+    // Set up ODR
+    switch (conf & __GPIO_INIST_MASK)
+    {
+        case __GPIO_INIST_0:
+            gpio->BRR = 1 << b;
+            break;
+        case __GPIO_INIST_1:
+            gpio->BSRR = 1 << b;
+            break;
+    }
+
+    // Set up GPIO config & mode
     if (b < 8)
         gpio->CRL = (gpio->CRL & m) | n;
     else

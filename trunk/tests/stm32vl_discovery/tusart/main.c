@@ -27,7 +27,7 @@ static void do_test_xsend ()
         puts ("\r\nNow sending 1000 visible characters with TX off...");
 
         // Переводим вывод USART1_TX в режим плавающего входа
-        *GPIO_CR (USART1_TX) = GPIO_SET (*GPIO_CR (USART1_TX),
+        *GPIO_CR (USART1_TX) = GPIO_CONFIGURE (*GPIO_CR (USART1_TX),
             USART1_TX, INPUT, FLOATING);
 
         for (unsigned i = 0; i < 1000; i++)
@@ -38,7 +38,7 @@ static void do_test_xsend ()
             ;
 
         // Возвращаем USART1_TX в режим AF push/pull
-        *GPIO_CR (USART1_TX) = GPIO_SET (*GPIO_CR (USART1_TX),
+        *GPIO_CR (USART1_TX) = GPIO_CONFIGURE (*GPIO_CR (USART1_TX),
             USART1_TX, OUTPUT_2MHz, AF_PUSHPULL);
     }
 }
@@ -53,6 +53,7 @@ int main (void)
     usart1_init ();
     puts ("USART library demo running");
 
+    clock_init ();
     led_init ();
 
     uint32_t old_clock = clock;

@@ -27,6 +27,11 @@ TARGET = none-eabi
 MAKEDEP = $(shell which makedep 2>/dev/null)
 DOXYGEN = $(shell which doxygen 2>/dev/null)
 
+# Автоматически обновляем зависимости
+ifneq ($(MAKEDEP),)
+AUTODEP = 1
+endif
+
 # Определим макросы для архитектуры
 CFLAGS.DEF += -DARCH_$(call asciiup,$(ARCH))
 

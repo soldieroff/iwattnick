@@ -14,6 +14,7 @@ int main (void)
     usart1_init ();
     printf ("Real-Time-Clock demo started\r\n");
 
+    clock_init ();
     led_init ();
     rtc_init ();
 

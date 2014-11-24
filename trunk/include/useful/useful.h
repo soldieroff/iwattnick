@@ -31,6 +31,13 @@
 /// Exchange two values of the same type
 #define XCHG(x, y)		{ typeof (x) __z = x; x = y; y = __z; }
 
+#define _STRINGIFY(x)		#x
+/// Convert x -> "x"
+#define STRINGIFY(x)		_STRINGIFY(x)
+
+/// Return the absolute value of a integer
+#define ABS(x)			({ typeof (x) __z = x; if (__z < 0) __z = -__z; __z; })
+
 #if !defined __cplusplus
 /// Define the bool type for C
 typedef enum { false = 0, true = !false } bool;

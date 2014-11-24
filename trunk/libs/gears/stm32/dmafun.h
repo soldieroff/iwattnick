@@ -14,7 +14,7 @@ void
 #else
     dma_copy (DMA_TypeDef *_dma,
 #endif
-        unsigned chan, uint32_t ccr, void *src, void *dst, unsigned count)
+        unsigned chan, uint32_t ccr, volatile void *src, volatile void *dst, unsigned count)
 {
     // Unfortunately, these checks won't work in preprocessor because
     // PERIPH_BASE is not just a const like it is supposed to be.
@@ -40,6 +40,7 @@ void
     ccr |= DMA_CCR_MINC;
 
     if ((uint32_t)src < PERIPH_BASE)
+    {
         if ((uint32_t)dst < PERIPH_BASE)
             // memory -> memory
             ccr |= DMA_CCR_MEM2MEM | DMA_CCR_PINC;
@@ -50,13 +51,12 @@ void
             // src must be the peripherial
             XCHG (src, dst);
         }
-    else
+    }
+    /*else
         // device -> device impossible, so it is device -> memory
-        /*ccr &= ~DMA_CCR_DIR*/
+        ccr &= ~DMA_CCR_DIR*/
 
     // Disable DMA channel if it was enabled
-    dmac->CCR = 0;
-    // Quirk: We must do it TWICE, otherwise DMA won't reset
     dmac->CCR = 0;
     // Clear DMA status for the channel
     _dma->IFCR = (DMA_IFCR_CGIF1 | DMA_IFCR_CTCIF1 |

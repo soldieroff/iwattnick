@@ -37,10 +37,10 @@
 #define __GPIO_BIT_MASK		0x0F00
 #define __GPIO_BIT_SHIFT	8
 
-#define __GPIO_BST_MASK		0x0000
-#define __GPIO_BST_X		0x0000
-#define __GPIO_BST_0		0x0040
-#define __GPIO_BST_1		0x0080
+#define __GPIO_INIST_MASK	0x00C0
+#define __GPIO_INIST_X		0x0000
+#define __GPIO_INIST_0		0x0040
+#define __GPIO_INIST_1		0x0080
 
 /// Preprocessor: compare the port of hw feature x with port name p
 #define PORT_CMP(x, p)		(JOIN2(__GPIO_PORT_, PORT(x)) == JOIN2(__GPIO_PORT_, p))
@@ -115,7 +115,7 @@
  * Drop given bits in old GPIO CRL/CRH and set according to new mode & config.
  * Example:
  * @code
- *      GPIO (GREEN_LED) = GPIO_SET (GPIO (GREEN_LED), GREEN_LED, OUTPUT_2MHz, PUSHPULL);
+ *      GPIO (GREEN_LED) = GPIO_CONFIGURE (GPIO (GREEN_LED), GREEN_LED, OUTPUT_2MHz, PUSHPULL);
  * @endcode
  * @arg v
  *      The old value of the configuration register (or a constant)
@@ -126,7 +126,7 @@
  * @arg c
  *      Configuration bits (without GPIO_CNF_ prefix)
  */
-#define GPIO_SET(v,b,m,c)	(((v) & ~GPIO_CNFMODE(b, MASK, MASK)) | GPIO_CNFMODE(b, m, c))
+#define GPIO_CONFIGURE(v,b,m,c)	(((v) & ~GPIO_CNFMODE(b, MASK, MASK)) | GPIO_CNFMODE(b, m, c))
 
 /**
  * Return a pointer to either CRL or CRH depending on the bit number of
@@ -137,10 +137,10 @@
 #define GPIO_CR(b)		((BIT(b) < 8) ? &GPIO(b)->CRL : &GPIO(b)->CRH)
 
 /// Atomic set of a single bit in port
-#define GPIO_BSET(x)		(GPIO(x)->BSRR = BITV (x))
+#define GPIO_SET(x)		(GPIO(x)->BSRR = BITV (x))
 
 /// Atomic clear of a single bit in port
-#define GPIO_BRESET(x)		(GPIO(x)->BRR = BITV (x))
+#define GPIO_RESET(x)		(GPIO(x)->BRR = BITV (x))
 
 /**
  * Define the configuration of a single GPIO port.
@@ -158,7 +158,7 @@
 	(BIT(p) << __GPIO_BIT_SHIFT) | \
 	JOIN2 (GPIO_MODE_, m) | \
 	JOIN2 (GPIO_CNF_, c) | \
-	JOIN2 (__GPIO_BST_, s) \
+	JOIN2 (__GPIO_INIST_, s) \
 )
 
 /**

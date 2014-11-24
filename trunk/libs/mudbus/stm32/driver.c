@@ -39,7 +39,8 @@ void mbd_tx_start (mudbus_driver_t *mbd, const uint8_t *data, uint8_t len)
 
     // Set up DMA channel for transfer
     dma_copy (mbd->dma, mbd->dma_tx_chan,
-        DMA_CCR_TCIE | DMA_CCR_TEIE | DMA_CCR_PSIZE_8 | DMA_CCR_MSIZE_8 | DMA_CCR_PL_VERYHIGH,
+        DMA_CCR_TCIE | DMA_CCR_TEIE | DMA_CCR_PSIZE_8 | DMA_CCR_MSIZE_8 |
+        DMA_CCR_MINC | DMA_CCR_PL_VERYHIGH,
         (void *)data, (void *)&mbd->usart->DR, len);
 }
 
@@ -59,7 +60,8 @@ void mbd_rx_start (mudbus_driver_t *mbd, uint8_t *data, uint8_t len)
 
     // Set up DMA channel for transfer
     dma_copy (mbd->dma, mbd->dma_rx_chan,
-        DMA_CCR_TCIE | DMA_CCR_TEIE | DMA_CCR_PSIZE_8 | DMA_CCR_MSIZE_8 | DMA_CCR_PL_VERYHIGH,
+        DMA_CCR_TCIE | DMA_CCR_TEIE | DMA_CCR_PSIZE_8 | DMA_CCR_MSIZE_8 |
+        DMA_CCR_MINC | DMA_CCR_PL_VERYHIGH,
         (void *)&mbd->usart->DR, (void *)data, len);
 
     // Enable DMA -> USART receiving
