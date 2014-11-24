@@ -14,7 +14,7 @@ void usart1_init ()
 #error "Expected USART1 RX & TX on same port!"
 #endif
     // Инициализация вывода PA9 & PA10 - USART1_Tx & USART1_Rx
-    *GPIO_CR (USART1_TX) = GPIO_SET (GPIO_SET (*GPIO_CR (USART1_TX),
+    *GPIO_CR (USART1_TX) = GPIO_CONFIGURE (GPIO_CONFIGURE (*GPIO_CR (USART1_TX),
         USART1_TX, OUTPUT_2MHz, AF_PUSHPULL),
         USART1_RX, INPUT, FLOATING);
 
@@ -36,7 +36,7 @@ void led_init ()
 #if !defined __MAKEDEP__ && !PORTS_CMP (GLED, BLED)
 #error "Expected GLED and BLED on same port!"
 #endif
-    *GPIO_CR (GLED) = GPIO_SET (GPIO_SET (*GPIO_CR (GLED),
+    *GPIO_CR (GLED) = GPIO_CONFIGURE (GPIO_CONFIGURE (*GPIO_CR (GLED),
         GLED, OUTPUT_2MHz, PUSHPULL),
         BLED, OUTPUT_2MHz, PUSHPULL);
 
@@ -44,7 +44,7 @@ void led_init ()
     GPIO (GLED)->BRR = BITV (GLED) | BITV (BLED);
 
     // Настроим GPIO для кнопки
-    *GPIO_CR (USRBUT) = GPIO_SET (*GPIO_CR (USRBUT),
+    *GPIO_CR (USRBUT) = GPIO_CONFIGURE (*GPIO_CR (USRBUT),
         USRBUT, INPUT, FLOATING);
 }
 

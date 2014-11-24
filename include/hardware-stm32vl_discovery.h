@@ -76,7 +76,10 @@
 #define USART2_RX_DMA_IRQ_PRIO	0
 
 // Where we have connected the LCD based on the ST7567 controlled in SPI mode
-#define ST7567_SPI		1
+#define ST7567_SPI_NUM		1
+#define ST7567_SPI_TX_DMA_NUM	1
+#define ST7567_SPI_TX_DMA_CHAN	3
+#define ST7567_SPI_TX_DMA_IRQ_PRIO	0
 
 // Chip Select /CS
 #define ST7567_CS_PORT		B
@@ -88,11 +91,21 @@
 #define ST7567_RS_PORT		B
 #define ST7567_RS_BIT		2
 // Serial clock SCK
-#define ST7567_SCK_PORT		B
-#define ST7567_SCK_BIT		3
+#define ST7567_SCK_PORT		A
+#define ST7567_SCK_BIT		5
 // Serial data SDA (MOSI)
-#define ST7567_SDA_PORT		B
-#define ST7567_SDA_BIT		5
+#define ST7567_SDA_PORT		A
+#define ST7567_SDA_BIT		7
+
+// Some defines for the YAGL library
+
+#define G_HARDWARE		st7567
+#define G_HARDWARE_H		"st7567.h"
+
+// Framebuffer width, pixels
+#define G_FB_W			128
+// Framebuffer height, pixels
+#define G_FB_H			64
 
 // That's all we have, folks!
 

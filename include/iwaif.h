@@ -1,7 +1,7 @@
 /*
     iWattnick the on-board computer for e-transport
     Public interface description
-    Copyright (C) 2009-2014 Andrew Zabolotny All Rights Reserved
+    Copyright (C) 2014 Andrew Zabolotny All Rights Reserved
 
     This code can be freely redistributed under the terms of
     GNU General Public License version 3 or later.

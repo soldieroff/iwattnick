@@ -30,8 +30,8 @@ static void do_test_send ()
 
     // rather than writing directly "dma1_copy" we'll use our brain-fucking macros
     JOIN3 (dma, DMA_NUM (USART1_TX), _copy) (DMA_CHAN (USART1_TX),
-        DMA_CCR_PSIZE_8 | DMA_CCR_MSIZE_8 | DMA_CCR_PL_VERYHIGH | DMA_CCR_TCIE,
-        (void *)test_data, (void *)&USART1->DR, sizeof (test_data) - 1);
+        DMA_CCR_PSIZE_8 | DMA_CCR_MSIZE_8 | DMA_CCR_MINC | DMA_CCR_PL_VERYHIGH | DMA_CCR_TCIE,
+        (void *)test_data, &USART1->DR, sizeof (test_data) - 1);
 
     // Enable USART1 -> DMA transmission
     USART1->CR3 |= USART_CR3_DMAT;
@@ -68,7 +68,7 @@ static void do_test_recv ()
 
     // rather than writing directly "dma1_copy" we'll use our brain-fucking macros
     JOIN3 (dma, DMA_NUM (USART1_RX), _copy) (DMA_CHAN (USART1_RX),
-        DMA_CCR_PSIZE_8 | DMA_CCR_MSIZE_8 | DMA_CCR_PL_VERYHIGH | DMA_CCR_TCIE,
+        DMA_CCR_PSIZE_8 | DMA_CCR_MSIZE_8 | DMA_CCR_MINC | DMA_CCR_PL_VERYHIGH | DMA_CCR_TCIE,
         (void *)&USART1->DR, (void *)rxbuff, sizeof (rxbuff));
 
     // Enable DMA -> USART transmission
