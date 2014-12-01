@@ -10,6 +10,19 @@
 #define __YAGL_H__
 
 /**
+ * @file yagl.h
+ *      The Yet Another Graphics Library is a lightweight drawing
+ *      library optimized for 32-bit microcontrollers. The library
+ *      provides routines for drawing some graphics primitives
+ *      and has support for clipping to rectangular screen regions.
+ *
+ *      It has built-in support for some simple LCD controllers.
+ */
+
+/// Define if you prefer speed over code size
+#define G_OPTIMIZE_SPEED
+
+/**
  * Bytes are vertical strips of pixels, LSB at top, strips ordered horizontally,
  * then another block of vertical strips of pixels.
  *
@@ -98,6 +111,13 @@ typedef uint8_t g_fb_t;
 
 #endif
 
+/// Create a single 'size' value from width and height
+#define G_MK_SIZE(w,h)	(((w) & 0xffff) | ((h) << 16))
+/// Extract width from compound 'size'
+#define G_SIZE_W(x)	((x) & 0xffff)
+/// Extract height from compound 'size'
+#define G_SIZE_H(x)	((x) >> 16)
+
 /**
  * A clipping rectangle
  */
@@ -127,6 +147,19 @@ typedef struct
 /// The static graphics library variables
 extern g_t g;
 
+/// The system clock variable - used for animations
+extern volatile uint32_t clock;
+
+/// Glyph data 16-bit offsets (relative to gbc_glyphs)
+extern const uint16_t gbc_glyphs [];
+
+/// Glyph type bits (BITMAP if bit is 0, ANIM if bit is 1)
+extern const uint8_t gbc_glyph_types [];
+
+/// Get a pointer to glyph data (BITMAP or ANIM) by glyph code
+#define gbc_glyph(x)	(gbc_glyphs[x] ? (uint8_t *)gbc_glyphs + gbc_glyphs [x] : 0)
+
+
 /**
  * Initialize the graphics library
  */
@@ -136,6 +169,33 @@ extern void g_init ();
  * Clear the framebuffer
  */
 extern void g_clear ();
+
+/**
+ * Set clipping area to whole screen
+ */
+extern void g_clip_screen ();
+
+/**
+ * Set the clipping rectangle. The clipping rectangle must completely
+ * lie inside the screen.
+ * @arg cxmin
+ *      The minimal X clipping coordinate (inclusive)
+ * @arg cymin
+ *      The minimal Y clipping coordinate (inclusive)
+ * @arg cxmax
+ *      The maximal X clipping coordinate (inclusive)
+ * @arg cymax
+ *      The maximal Y clipping coordinate (inclusive)
+ */
+extern void g_clip (uint16_t cxmin, uint16_t cymin, uint16_t cxmax, uint16_t cymax);
+
+/**
+ * Set current color
+ * @arg c
+ *      The color used for drawing
+ */
+static inline void g_color (g_fb_t c)
+{ g.color = c & ((1 << G_BPP) - 1); }
 
 /**
  * Display a single pixel with current color
@@ -208,5 +268,109 @@ extern void g_rect (int x1, int y1, int x2, int y2);
  *      The second Y coordinate
  */
 extern void g_box (int x1, int y1, int x2, int y2);
+
+/**
+ * Display a monochrome bitmap.
+ *
+ * The order of bits and bytes in bitmap is supposed
+ * to be the same as in framebuffer.
+ * @arg x
+ *      The X coordinate of the bitmap
+ * @arg y
+ *      The Y coordinate of the bitmap
+ * @arg bitmap
+ *      A pointer to the bitmap. The first byte is hhwwwwww
+ *      bit format, height is (hh+1)*8, width is wwwwww+1,
+ *      e.g. bitmaps can be up to 64x32 pixels size.
+ * @return
+ *      Bitmap width in lower 16 bits, height in upper 16 bits.
+ */
+extern uint32_t g_bitmap (int x, int y, const uint8_t *bitmap);
+
+/**
+ * Display animation frame.
+ *
+ * @arg x
+ *      The X coordinate of the animation
+ * @arg y
+ *      The Y coordinate of the animation
+ * @arg bitmap
+ *      A pointer to animation data. The first byte contains
+ *      maximal frame width/height exactly like a bitmap.
+ *      Second byte is number of frames, third is animation
+ *      delay, then first frame bitmap, second, third and so on.
+ * @return
+ *      Frame width in lower 16 bits, height in upper 16 bits.
+ */
+extern uint32_t g_anim (int x, int y, unsigned n, const uint8_t *anim);
+
+/**
+ * Display a glyph at given position. A glyph may be either
+ * a bitmap or an anim, the type is automatically detected.
+ * The animation frame to show is deducted from the system
+ * clock variable.
+ * @arg x
+ *      The X coordinate of the glyph
+ * @arg y
+ *      The Y coordinate of the glyph
+ * @arg glyph
+ *      Glyph code
+ * @return
+ *      Glyph size, top 16 bits = height, low 16 bits = width
+ */
+extern uint32_t g_glyph (int x, int y, uint8_t glyph);
+
+/// This bit, if set, requests vertical text direction
+#define G_TEXTF_VERTICAL	0x80
+
+/**
+ * Display a text object.
+ * @arg x
+ *      The X coordinate of the text
+ * @arg y
+ *      The Y coordinate of the text
+ * @arg text
+ *      A pointer to text object data. First byte contains glyph spacing
+ *      (lower 7 bits, signed value) and vertical text flag (8th bit).
+ *      Then comes the number of glyphs, and then - glyph codes.
+ * @return
+ *      Resulting text size, top 16 bits = height, low 16 bits = width
+ */
+extern uint32_t g_text (int x, int y, const uint8_t *text);
+
+/**
+ * Display a text string. This is a lower-level routine, compared to g_text,
+ * and could be helpful to display arbitrary text from the program (not
+ * predefined strings, like g_text).
+ * @arg x
+ *      The X coordinate of the text
+ * @arg y
+ *      The Y coordinate of the text
+ * @arg fspc
+ *      Glyph spacing and vertical text flag
+ * @arg count
+ *      Number of characters to display
+ * @arg text
+ *      A pointer to text object data. First byte contains glyph spacing
+ *      (lower 7 bits, signed value) and vertical text flag (8th bit).
+ *      Then comes the number of glyphs, and then - glyph codes.
+ * @return
+ *      Resulting text size, top 16 bits = height, low 16 bits = width
+ */
+extern uint32_t g_print (int x, int y, uint8_t fspc, uint8_t count, const char *text);
+
+/**
+ * User function to display a custom "glyph" (usually a variable,
+ * but actually can be anything).
+ * @arg x
+ *      The X coordinate of the user glyph
+ * @arg y
+ *      The Y coordinate of the user glyph
+ * @arg glyph
+ *      User glyph code (usually one of VAR_xxx constants)
+ * @return
+ *      Glyph width in lower 16 bits, glyph height in upper 16 bits.
+ */
+extern uint32_t g_user_glyph (int x, int y, uint8_t glyph);
 
 #endif // __YAGL_H__

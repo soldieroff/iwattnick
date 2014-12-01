@@ -61,11 +61,11 @@ typedef enum { false = 0, true = !false } bool;
 
 #if defined __DEBUG__ && defined CORE_CORTEX_M3
 /// Break into debugger
-#  define DEBUG_BREAK()		__asm__ __volatile__ ("bkpt #0")
+#  define DEBUG_BREAK		__asm__ __volatile__ ("bkpt #0")
 /// Break into debugger if condition @a c is true
-#  define DEBUG_BREAK_IF(c)	if (c) DEBUG_BREAK ();
+#  define DEBUG_BREAK_IF(c)	if (c) DEBUG_BREAK;
 #else
-#  define DEBUG_BREAK()
+#  define DEBUG_BREAK
 #  define DEBUG_BREAK_IF(c)
 #endif
 
