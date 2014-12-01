@@ -68,6 +68,11 @@ static bool g_clip_one (int *x, int *y, int dx, int dy)
     return false;
 }
 
+/* For better clipping precision it would be better to switch from
+ * integer coordinates to 1.15.16 fixed-point from the beginning
+ * of the function, but that would make the code less readable and
+ * a bit larger.
+ */
 void g_line (int x1, int y1, int x2, int y2)
 {
     int dx = x2 - x1;
@@ -107,8 +112,8 @@ void g_line (int x1, int y1, int x2, int y2)
             XCHG (y1, y2);
         }
 
+        dx = ((x2 - x1) << 16) / (y2 - y1);
         x1 = (x1 << 16) | 0x8000;
-        dx = (dx << 16) / dy;
 
         while (y1 <= y2)
         {
@@ -126,8 +131,8 @@ void g_line (int x1, int y1, int x2, int y2)
             XCHG (y1, y2);
         }
 
+        dy = ((y2 - y1) << 16) / (x2 - x1);
         y1 = (y1 << 16) | 0x8000;
-        dy = (dy << 16) / dx;
 
         while (x1 <= x2)
         {
@@ -152,6 +157,9 @@ void g_hline (int x1, int x2, int y)
     if (x2 > g.clip.xmax)
         x2 = g.clip.xmax;
 
+    if (x1 > x2)
+        return;
+
     while (x1 <= x2)
     {
         _pixel (x1, y, g.color);
@@ -173,7 +181,10 @@ void g_vline (int x, int y1, int y2)
     if (y2 > g.clip.ymax)
         y2 = g.clip.ymax;
 
-#if G_BORD == G_BORD_VLSBT
+    if (y1 > y2)
+        return;
+
+#if defined (G_OPTIMIZE_SPEED) && (G_BORD == G_BORD_VLSBT)
 
     unsigned sofs = G_FB_OFS (x, y1);
     unsigned eofs = G_FB_OFS (x, y2);

@@ -10,14 +10,14 @@
 #include "yagl.h"
 #include "stdfun.h"
 
+// The global graphics context
 g_t g;
 
 void g_init ()
 {
     memset (&g, 0, sizeof (g));
-    g.clip.xmax = G_FB_W - 1;
-    g.clip.ymax = G_FB_H - 1;
-    g.color = G_PM (0, 0);
+    g.color = (1 << G_BPP) - 1;
+    g_clip_screen ();
 
     JOIN2 (G_HARDWARE, _init) ();
 }
