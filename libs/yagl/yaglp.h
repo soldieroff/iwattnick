@@ -14,7 +14,14 @@ static inline void _pixel (unsigned x, unsigned y, unsigned v)
 {
     unsigned ofs = G_FB_OFS (x, y);
     g_fb_t p = g.fb [ofs];
+#if (G_BPP == 1)
+    g_fb_t m = G_PV (x, y, 1);
+    p &= ~m;
+    if (v)
+        p |= m;
+#else
     p = (p & ~G_PM (x, y)) | G_PV (x, y, v);
+#endif
     g.fb [ofs] = p;
 }
 

@@ -23,17 +23,19 @@ uint32_t g_bitmap (int x, int y, const uint8_t *bitmap)
         if ((x >= g.clip.xmin)
          && (x <= g.clip.xmax))
         {
+            h &= 0xff;
             h |= h << 8;
             int yy = y;
             while (h & 0xff00)
             {
                 unsigned bits = *++bitmap;
                 h |= 0x080000;
-                while (h & 0xFF0000)
+                while (bits && (h & 0xFF0000))
                 {
+                    if (yy > g.clip.ymax)
+                        break;
                     if ((bits & 1)
-                     && (yy >= g.clip.ymin)
-                     && (yy <= g.clip.ymax))
+                     && (yy >= g.clip.ymin))
                         _pixel (x, yy, g.color);
 
                     yy++;
