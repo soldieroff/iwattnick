@@ -150,15 +150,6 @@ extern g_t g;
 /// The system clock variable - used for animations
 extern volatile uint32_t clock;
 
-/// Glyph data 16-bit offsets (relative to gbc_glyphs)
-extern const uint16_t gbc_glyphs [];
-
-/// Glyph type bits (BITMAP if bit is 0, ANIM if bit is 1)
-extern const uint8_t gbc_glyph_types [];
-
-/// Get a pointer to glyph data (BITMAP or ANIM) by glyph code
-#define gbc_glyph(x)	(gbc_glyphs[x] ? (uint8_t *)gbc_glyphs + gbc_glyphs [x] : 0)
-
 
 /**
  * Initialize the graphics library
@@ -288,13 +279,29 @@ extern void g_box (int x1, int y1, int x2, int y2);
 extern uint32_t g_bitmap (int x, int y, const uint8_t *bitmap);
 
 /**
+ * Query the size of a bitmap
+ * @arg bitmap
+ *      A pointer to the bitmap. The first byte is hhwwwwww
+ *      bit format, height is (hh+1)*8, width is wwwwww+1,
+ *      e.g. bitmaps can be up to 64x32 pixels size.
+ * @return
+ *      Bitmap width in lower 16 bits, height in upper 16 bits.
+ */
+extern uint32_t g_bitmap_size (const uint8_t *bitmap);
+
+/// Query the maximal size of all animation frames
+#define g_anim_maxsize g_bitmap_size
+
+/**
  * Display animation frame.
  *
  * @arg x
  *      The X coordinate of the animation
  * @arg y
  *      The Y coordinate of the animation
- * @arg bitmap
+ * @arg n
+ *      Frame number to display
+ * @arg anim
  *      A pointer to animation data. The first byte contains
  *      maximal frame width/height exactly like a bitmap.
  *      Second byte is number of frames, third is animation
@@ -305,72 +312,17 @@ extern uint32_t g_bitmap (int x, int y, const uint8_t *bitmap);
 extern uint32_t g_anim (int x, int y, unsigned n, const uint8_t *anim);
 
 /**
- * Display a glyph at given position. A glyph may be either
- * a bitmap or an anim, the type is automatically detected.
- * The animation frame to show is deducted from the system
- * clock variable.
- * @arg x
- *      The X coordinate of the glyph
- * @arg y
- *      The Y coordinate of the glyph
- * @arg glyph
- *      Glyph code
+ * Query the size of an animation frame.
+ * @arg n
+ *      Frame number to query
+ * @arg anim
+ *      A pointer to animation data. The first byte contains
+ *      maximal frame width/height exactly like a bitmap.
+ *      Second byte is number of frames, third is animation
+ *      delay, then first frame bitmap, second, third and so on.
  * @return
- *      Glyph size, top 16 bits = height, low 16 bits = width
+ *      Frame width in lower 16 bits, height in upper 16 bits.
  */
-extern uint32_t g_glyph (int x, int y, uint8_t glyph);
-
-/// This bit, if set, requests vertical text direction
-#define G_TEXTF_VERTICAL	0x80
-
-/**
- * Display a text object.
- * @arg x
- *      The X coordinate of the text
- * @arg y
- *      The Y coordinate of the text
- * @arg text
- *      A pointer to text object data. First byte contains glyph spacing
- *      (lower 7 bits, signed value) and vertical text flag (8th bit).
- *      Then comes the number of glyphs, and then - glyph codes.
- * @return
- *      Resulting text size, top 16 bits = height, low 16 bits = width
- */
-extern uint32_t g_text (int x, int y, const uint8_t *text);
-
-/**
- * Display a text string. This is a lower-level routine, compared to g_text,
- * and could be helpful to display arbitrary text from the program (not
- * predefined strings, like g_text).
- * @arg x
- *      The X coordinate of the text
- * @arg y
- *      The Y coordinate of the text
- * @arg fspc
- *      Glyph spacing and vertical text flag
- * @arg count
- *      Number of characters to display
- * @arg text
- *      A pointer to text object data. First byte contains glyph spacing
- *      (lower 7 bits, signed value) and vertical text flag (8th bit).
- *      Then comes the number of glyphs, and then - glyph codes.
- * @return
- *      Resulting text size, top 16 bits = height, low 16 bits = width
- */
-extern uint32_t g_print (int x, int y, uint8_t fspc, uint8_t count, const char *text);
-
-/**
- * User function to display a custom "glyph" (usually a variable,
- * but actually can be anything).
- * @arg x
- *      The X coordinate of the user glyph
- * @arg y
- *      The Y coordinate of the user glyph
- * @arg glyph
- *      User glyph code (usually one of VAR_xxx constants)
- * @return
- *      Glyph width in lower 16 bits, glyph height in upper 16 bits.
- */
-extern uint32_t g_user_glyph (int x, int y, uint8_t glyph);
+extern uint32_t g_anim_size (unsigned n, const uint8_t *anim);
 
 #endif // __YAGL_H__

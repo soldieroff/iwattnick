@@ -1,0 +1,209 @@
+Graphics Objects Compiler
+-------------------------
+
+GOC is a simple tool that converts a textual description of some types
+of graphics objects into an assembler file which can be then compiled
+and linked into your program.
+
+Currently GOC supports the following object types:
+
+ * Monochrome bitmaps (up to 64x32 pixels)
+ * Animated monochrome bitmaps (N bitmaps played in sequence)
+ * Text strings (also handy for language translations)
+ * Variables (external entities that can be embedded into text strings)
+ * Layouts (collection of graphics primitives)
+
+Graphics primitives
+-------------------
+
+A glyph is the image of a letter. The glyph is assigned a code in the range
+0..255, so you cannot have more than 256 glyph objects. Either bitmaps,
+animated bitmaps or variables may be used as glyphs. Textual objects may
+reference any glyph.
+
+Bitmap, anim and var objects with a single-letter ID are given the code
+corresponding to that ID. For example, bitmap A is given the code of the
+letter A and so on. Graphics objects with multi-letter IDs are given
+codes that are not occupied by single-letter IDs.
+
+Also there is the notion of "digital font". This is an animation (thus
+it has a single code) which contains the glyphs of all digits (0-9),
+the minus sign (-) and the decimal point (, or .). Digital font is used
+to display numbers (variable values etc).
+
+
+Directive syntax:
+
+bitmap [ID]
+[bitmap data]
+
+    Define a single bitmap (glyph).
+
+    ID - bitmap identifier
+    bitmap data is defined as a 2D array of
+    '.' (empty pixels) and '@' (pixels set).
+
+
+anim [ID] {DELAY}
+[bitmap 1] [bitmap 2] [bitmap 3] ...
+
+    Define a group of bitmaps (animated glyph).
+    Since the line width may become very large (if you have many
+    large frames), multiple anim declarations are permitted with
+    the same ID. In this case, the frames from the next declaration
+    are appended to frames from previous declarations. The delay
+    must coincide, otherwise a error message is issued.
+
+    ID - animation identifier
+    DELAY - system clock ticks per frame (default 1)
+
+
+var [ID]
+
+    Reserve space for referencing the value of a variable.
+
+    ID - variable identifier
+
+
+shift [number]
+    This declares the value that is added to the code of all
+    single-letter glyphs that follow. By default 'shift 0' is used.
+
+    This can be handy when including complete alphabets. In the
+    following example a large font is layed on capital letters,
+    and a small font - on lower case.
+
+    include large-font.go
+    shift 32
+    include small-font.go
+    shift 0
+
+    (in both .go files bitmaps are declared as capital A, B, C etc).
+    Don't forget to reset shift to 0 after the section that you want
+    shifted, otherwise you may get unexpected results.
+
+
+text [ID] {SPACING}{FLAGS} [string]
+
+    Define a string of glyphs.
+
+    ID - text identifier
+    SPACING - glyph spacing, in pixels, -64..63
+    FLAGS - text flags: 'V' - vertical text
+
+    The string may consist of various objects: glyphs, animations,
+    variables and may contain formatting directives. All extended
+    functions are started with the '\' (backslash) character:
+
+    \\ - a double backslash means a single backslash
+    \N - this means the glyph with the decimal code N
+    \0N - this means the glyph with the octal code N
+    \xN - this means the glyph with the hexadecimal code N
+    \{bitmap-id} - this is a reference to a bitmap with the identifier
+        longer than a single letter.
+    \{anim-id} - this is a reference to an animation with the
+        identifier longer than a single letter.
+    \{var-id,arg} - this means a reference to a variable. The
+        optional 'arg' parameter can be a number or a glyph code,
+        which is passed to user-defined variable renderer.
+    \{center} - this tells the renderer to center horizontally
+        the text that follows in the clipping area.
+    \{right} - this tells the renderer to align the text that
+        follows by the right margin of the clipping area.
+
+    Example:
+    text test 1 The speed is\{right}\{speed,impact_8x16_digits}km/h
+
+
+Layouts
+-------
+
+A layout defines a set of graphics primitives placed at certain
+coordinates inside the layout. A layout may be full-screen or
+partial. The coordinates of objects within a layout are relative
+to the coordinates of the layout they belong to.
+
+A layout may contain menu items. User may navigate between menu
+items (the items will scroll if they don't fit the area reserved
+for menu). When a menu item is activated, a specified action
+is taken. You may define any number of actions, there are
+pre-defined actions (which are executed by YAGL code) and
+user-defined actions (which are handled by an user callback).
+
+A layout may have only one active instance. This is because the
+memory needed for layout functions is reserved at compile time,
+one structure per layout object.
+
+Directive syntax:
+
+action [ID] {(L|V|N){(L|V|N){(L|V|N)}}}
+    define a new action code (handled by user code). Action may have
+    up to three arguments, every argument is defined by its type.
+
+    ID - action identifier
+    L - argument is a layout ID
+    V - argument is a variable ID
+    N - argument is a number
+
+    When invoking the action, the arguments are given then in round
+    brackets (no space is allowed between action id and opening bracket).
+
+    Example:
+    action setvar VN
+
+    Pre-defined actions:
+    LAYOUT(L) - switch to layout L
+
+
+menu [ID]
+    declare a menu. The statement is followed by indented lines
+    that define the menu items, in the format:
+
+    [action] [text-id]
+    or
+    [action] [spacing] [menu item text]
+
+        action - the action to take place when you activate this menu item
+        text-id - the identifier of a TEXT object to use as menu item text
+        spacing - the spacing for menu item text
+        menu item text - you may use same features as in the 'text' directives,
+            reference glyphs, animations, variables etc.
+
+
+layout [ID] W H
+    [layout declarations]
+
+    define a new layout with given identifier
+
+    ID - layout identifier
+    W - layout width
+    H - layout height
+
+    Keywords active inside the layout context:
+
+
+    color [C]
+        select C as drawing color for following operations
+
+    line [X1] [Y1] [X2] [Y2]
+        draw a line from (X1,Y1) to (X2,Y2) with current color
+
+    box [X1] [Y1] [X2] [Y2]
+        draw a filled box from (X1,Y1) to (X2,Y2) with current color
+
+    text [X] [Y] [string]
+        draw a text string at given coordinates with current color.
+
+    draw [layout-ID] [X] [Y]
+        this executes all the directives from another layout. This can
+        be useful to create layout templates. The whole template is
+        shifted by (X,Y).
+
+        [X] the top-left corner X coordinate
+        [Y] the top-left corner Y coordinate
+
+    menu [ID] [X1] [Y1] [X2] [Y2]
+        draw the menu with given identifier. The screen area occupied by
+        the menu is defined by (X1,Y1)-(X2,Y2). Items are placed vertically
+        within this area; if there are too many items, they will be scrolled
+        to make the active item visible.

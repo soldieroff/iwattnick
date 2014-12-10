@@ -2,39 +2,15 @@
 # Sample Graphics Objects for LCD graphics library testing
 #
 
-# Directive syntax:
-#
-# bitmap [ID]
-# [bitmap data]
-#       Define a single bitmap (glyph).
-#
-#       ID - bitmap identifier
-#       bitmap data is defined as a 2D array of
-#       '.' (empty pixels) and '@' (pixels set).
-#
-# anim [ID] {DELAY}
-#       Define a group of bitmaps (animated glyph).
-#
-#       ID - animation identifier
-#       DELAY - system clock ticks per frame
-#
-# text [ID] {SPACING} {FLAGS}
-# [text data]
-#       Define a string of glyphs.
-#
-#       ID - text identifier
-#       SPACING - glyph spacing, in pixels, -64..63, default 1
-#       FLAGS - text flags: 'V' - vertical text
-#
-# var [ID]
-#       Reserve space for referencing the value of a variable.
-#
-#       ID - variable identifier
-
 include bold-6x8-cyr-caps.go
 include bold-6x8-lat-caps.go
 include bold-6x8-digits.go
 include bold-6x8-punct.go
+
+include proun-8x8-digits.go
+include impact-8x16-digits.go
+include large-10x16-digits.go
+include impact-12x24-digits.go
 
 anim clearance_turn 16
 @@@@@@@@ ........
@@ -165,239 +141,63 @@ bitmap huge
 @..................@
 @@................@@
 
-bitmap _0
-....@@@@..
-..@@@..@@.
-.@@.....@@
-.@@.....@@
-@@......@@
-@@......@@
-@.......@@
-@........@
-@........@
-@@.......@
-@@......@@
-@@......@@
-@@.....@@.
-@@.....@@.
-.@@..@@@..
-..@@@@....
 
-bitmap _1
-....@@....
-....@@....
-...@@@....
-...@@@....
-..@@@@....
-....@@....
-....@@....
-....@@....
-....@@....
-....@@....
-....@@....
-....@@....
-....@@....
-....@@....
-....@@....
-..@@@@@@..
+text hello 1    ПРИВЕТ
+text sobaka 1   ШЛА СО\{catrun}БАКА
+text royal 5    ПО РОЯЛЮ
 
-bitmap _2
-.@@@@@@@@.
-@@.....@@@
-........@@
-........@@
-........@@
-.......@@@
-......@@@.
-.....@@@..
-...@@@....
-.@@@......
-@@@.......
-@@........
-@@........
-@@........
-@@.......@
-@@@@@@@@@@
+text test1 1    \{center}МЕНЮ 1
+text mi_speed 1 SPEED IS\{right}\{speed,impact_8x16_digits}
+text mi_dist 1  DISTANCE IS \{dist,impact_8x16_digits}
 
-bitmap _3
-.@@@@@@@@.
-@@.....@@@
-........@@
-........@@
-........@@
-........@@
-.......@@.
-....@@@@..
-.......@@.
-........@@
-........@@
-........@@
-.......@@.
-.......@@.
-.....@@@..
-@@@@@@....
-
-bitmap _4
-........@@
-........@@
-........@@
-@@......@@
-@@......@@
-@@......@@
-@@......@@
-@@......@@
-@@......@@
-@@@@@@@@@@
-........@@
-........@@
-........@@
-........@@
-........@@
-........@@
-
-bitmap _5
-@@@@@@@@@@
-@@.......@
-@@........
-@@........
-@@........
-@@........
-@@..@@@...
-@@@@@@@@@.
-@@@.....@@
-........@@
-........@@
-........@@
-........@@
-.......@@.
-@@...@@@..
-.@@@@@....
-
-bitmap _6
-...@@@@@@.
-..@@....@@
-.@@.......
-.@@.......
-@@........
-@@........
-@@..@@@...
-@@@@@@@@@.
-@@@.....@@
-@@......@@
-@@......@@
-@@......@@
-@@......@@
-@@.....@@.
-.@@..@@@..
-..@@@@....
-
-bitmap _7
-@@@@@@@@@@
-........@@
-.......@@.
-......@@..
-......@@..
-.....@@...
-.....@@...
-.....@@...
-.....@@...
-....@@....
-....@@....
-....@@....
-....@@....
-....@@....
-....@@....
-....@@....
-
-bitmap _8
-...@@@@@@.
-..@@....@@
-.@@.....@@
-.@@.....@@
-.@@.....@@
-.@@....@@.
-..@@..@@..
-..@@@@@@..
-.@@....@@.
-@@......@@
-@@......@@
-@@......@@
-@@......@@
-@@.....@@.
-.@@..@@@..
-..@@@@....
-
-bitmap _9
-....@@@@..
-..@@@..@@.
-.@@.....@@
-@@......@@
-@@......@@
-@@......@@
-@@......@@
-@@.....@@@
-.@@@@@@@@@
-...@@@..@@
-........@@
-........@@
-.......@@.
-.......@@.
-@@....@@..
-.@@@@@@...
-
-bitmap _M
-..........
-..........
-..........
-..........
-..........
-..........
-@@@@@.....
-@@@@@@@@@@
-.....@@@@@
-..........
-..........
-..........
-..........
-..........
-..........
-..........
-
-bitmap _P
-..........
-..........
-..........
-....@@....
-....@@....
-....@@....
-@@@@@@....
-@@@@@@@@@@
-...@@@@@@@
-...@@.....
-...@@.....
-...@@.....
-..........
-..........
-..........
-..........
-
-text hello
-ПРИВЕТ
-
-text vert -1 V
-ВЕРТИКАЛЬ
-
-text sobaka 1
-ШЛА СО\{catrun}БАКА
-
-text royal 5
-ПО РОЯЛЮ
+text test2 1    \{center}МЕНЮ 2
+text mi_back 1  НАЗАД
 
 var speed
 var dist
 
-text speed 1
-\{speed}КМ/Ч
+text speed 1    \{speed,impact_8x16_digits}КМ/Ч
+text dist 1     \{dist,proun_8x8_digits}КМ
 
-text dist 1
-\{dist}КМ
+action setvar VN
+
+# A generic menu layout - the frame, title etc
+layout menuframe 128 64
+    color 1
+    box 0 0 127 9
+    line 0 10 0 63
+    line 0 63 127 63
+    line 127 63 127 10
+
+menu test1
+    layout(test2)   mi_speed
+    layout(test2)   mi_dist
+    layout(test2)   1 ANOTHER MENU ITEM
+    setvar(speed,0) 1 YET ANOTHER MENU ITEM
+    setvar(speed,1) 1 ONE MORE MENU ITEM
+    setvar(speed,2) 1 И ЕЩЁ ПУНКТ МЕНЮ
+    setvar(speed,3) 1 И ЕЩЁ
+    setvar(speed,4) 1 И ЕЩЁ...
+    setvar(speed,5) 1 И ЕЩЁ ДОФИГА...
+    setvar(speed,6) 1 МЕНЮ ЕЩЁ НЕ ЗАКОНЧИЛОСЬ
+    setvar(speed,7) 1 ИСТИНО ГОВОРЮ ВАМ
+    setvar(speed,8) 1 А ВОТ ТЕПЕРЬ ЗАКОНЧИЛОСЬ
+    setvar(speed,9) 1 ТЕПЕРЬ УЖЕ - ТОЧНО
+
+menu test2
+    layout(test1) mi_back
+    layout(test1) 1 ТОЖЕ НАЗАД
+
+layout test1 128 64
+    draw menuframe 0 0
+    color 0
+    text test1 0 0
+    color 1
+    menu test1 1 10 126 62
+
+layout test2 128 64
+    draw menuframe 0 0
+    color 0
+    text test2 0 0
+    color 1
+    menu test2 1 10 126 62
