@@ -9,45 +9,94 @@
 #include HARDWARE_H
 #include "yagl.h"
 #include "glayout.h"
+#include "yaglp.h"
+
+#define SIZE_QUERY_Y 16384
 
 uint32_t g_glyph (int x, int y, uint8_t glyph)
 {
     const uint8_t *data = goc_glyph (glyph);
-    if (goc_glyph_types [glyph >> 3] & (1 << (glyph & 7)))
+    if (goc_is_anim (glyph))
     {
         unsigned nframes = (unsigned)data [1] + 1;
         unsigned delay = (unsigned)data [2] + 1;
-        return g_anim (x, y, (clock / delay) % nframes, data);
+        nframes = (g_clock / delay) % nframes;
+
+        if (y == SIZE_QUERY_Y)
+            return g_anim_size (nframes, data);
+        else
+            return g_anim (x, y, nframes, data);
     }
 
-    return g_bitmap (x, y, data);
+    if (y == SIZE_QUERY_Y)
+        return g_bitmap_size (data);
+    else
+        return g_bitmap (x, y, data);
 }
 
-uint32_t g_print (int x, int y, int spacing, unsigned count, const char *text)
+uint32_t g_print (int x, int y, int8_t spacing, unsigned count, const char *text)
 {
-    unsigned mw = 0, mh = 0;
-    while (count--)
+    g_caret_t caret;
+    g_caret_init (&caret, x, y, spacing);
+
+    if (y == SIZE_QUERY_Y)
+        caret.flags |= G_FLAGS_SIZEQ;
+
+    while (count)
     {
-        uint8_t glyph = *text++;
+        uint32_t glyph = *text++;
+        count--;
+
         uint32_t size;
+
         if (glyph)
-            size = g_glyph (x, y, glyph);
+        {
+            if (caret.flags & G_FLAGS_SIZEQ)
+                size = g_glyph_size (glyph);
+            else
+                size = g_glyph (caret.x, caret.y, glyph);
+        }
         else
         {
-            glyph = *text++;
-            uint8_t arg = *text++;
+            glyph = *(uint16_t *)text;
+            text += 2;
             count -= 2;
-            size = g_user_glyph (x, y, glyph, arg);
+
+            switch (glyph & 0xff)
+            {
+                case VAR_dir:
+                    caret.flags = (caret.flags & ~G_FLAGS_DIRMASK) | ((glyph >> 8) & G_FLAGS_DIRMASK);
+                    continue;
+
+                case VAR_align:
+                    // don't recurse when querying size
+                    if (caret.flags & G_FLAGS_SIZEQ)
+                        goto leave;
+
+                    size = g_print_size (caret.spacing, count, text);
+                    switch (glyph >> 8)
+                    {
+                        case G_ALIGN_CENTER:
+                            caret.x += (g.clip.xmax + 1 - caret.x - G_SIZE_W (size)) / 2;
+                            break;
+
+                        case G_ALIGN_RIGHT:
+                            caret.x = (g.clip.xmax + 1 - G_SIZE_W (size));
+                            break;
+                    }
+                    continue;
+
+                default:
+                    size = g_user_glyph (caret.x, caret.y, glyph);
+                    break;
+            }
         }
-        unsigned delta = spacing + G_SIZE_W (size);
-        x += delta;
-        mw += delta;
-        delta = G_SIZE_H (size);
-        if (delta > mh)
-            mh = delta;
+
+        g_caret_advance (&caret, size);
     }
 
-    return G_MK_SIZE (mw, mh);
+leave:
+    return g_caret_size (&caret);
 }
 
 uint32_t g_text (int x, int y, const uint8_t *text)
@@ -55,84 +104,43 @@ uint32_t g_text (int x, int y, const uint8_t *text)
     return g_print (x, y, (int8_t)text [0], (unsigned)text [1] + 1, (const char *)(text + 2));
 }
 
-uint32_t g_printa (int x, int y, int spacing, unsigned count, const uint8_t *text, uint8_t glyph)
+uint32_t g_printa (int x, int y, int8_t spacing, unsigned count, const char *text, uint8_t glyph)
 {
-    if ((goc_glyph_types [glyph >> 3] & (1 << (glyph & 7))) == 0)
+    if (!goc_is_anim (glyph))
         return 0;
 
-    unsigned mw = 0, mh = 0;
     const uint8_t *anim = goc_glyph (glyph);
+    g_caret_t caret;
+    g_caret_init (&caret, x, y, spacing);
+
+    if (y == SIZE_QUERY_Y)
+        caret.flags |= G_FLAGS_SIZEQ;
 
     while (count--)
     {
-        uint32_t size = g_anim (x, y, *text++, anim);
-        unsigned delta = spacing + G_SIZE_W (size);
-        x += delta;
-        mw += delta;
-        delta = G_SIZE_H (size);
-        if (delta > mh)
-            mh = delta;
+        uint32_t size;
+        if (caret.flags & G_FLAGS_SIZEQ)
+            size = g_anim_size (*text++, anim);
+        else
+            size = g_anim (caret.x, caret.y, *text++, anim);
+
+        g_caret_advance (&caret, size);
     }
 
-    return G_MK_SIZE (mw, mh);
+    return g_caret_size (&caret);
 }
 
 uint32_t g_glyph_size (uint8_t glyph)
 {
-    const uint8_t *data = goc_glyph (glyph);
-    if (goc_glyph_types [glyph >> 3] & (1 << (glyph & 7)))
-    {
-        unsigned nframes = (unsigned)data [1] + 1;
-        unsigned delay = (unsigned)data [2] + 1;
-        return g_anim_size ((clock / delay) % nframes, data);
-    }
-
-    return g_bitmap_size (data);
+    return g_glyph (SIZE_QUERY_Y, SIZE_QUERY_Y, glyph);
 }
 
-uint32_t g_print_size (int spacing, unsigned count, const char *text)
+uint32_t g_print_size (int8_t spacing, unsigned count, const char *text)
 {
-    unsigned mw = 0, mh = 0;
-    while (count--)
-    {
-        uint8_t glyph = *text++;
-        uint32_t size;
-        if (glyph)
-            size = g_glyph_size (glyph);
-        else
-        {
-            glyph = *text++;
-            uint8_t arg = *text++;
-            count -= 2;
-            size = g_user_glyph_size (glyph, arg);
-        }
-        unsigned delta = spacing + G_SIZE_W (size);
-        mw += delta;
-        delta = G_SIZE_H (size);
-        if (delta > mh)
-            mh = delta;
-    }
-
-    return G_MK_SIZE (mw, mh);
+    return g_print (SIZE_QUERY_Y, SIZE_QUERY_Y, spacing, count, text);
 }
 
-uint32_t g_printa_size (int spacing, unsigned count, const uint8_t *text, uint8_t glyph)
+uint32_t g_printa_size (int8_t spacing, unsigned count, const char *text, uint8_t glyph)
 {
-    if ((goc_glyph_types [glyph >> 3] & (1 << (glyph & 7))) == 0)
-        return 0;
-
-    unsigned mw = 0, mh = 0;
-    const uint8_t *anim = goc_glyph (glyph);
-
-    while (count--)
-    {
-        uint32_t size = g_anim_size (*text++, anim);
-        unsigned delta = spacing + G_SIZE_W (size);
-        mw += delta;
-        delta = G_SIZE_H (size);
-        if (delta > mh)
-            mh = delta;
-    }
-
-    return G_MK_SIZE (mw, mh);
+    return g_printa (SIZE_QUERY_Y, SIZE_QUERY_Y, spacing, count, text, glyph);
 }

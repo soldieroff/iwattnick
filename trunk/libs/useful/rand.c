@@ -1,5 +1,5 @@
 /*
-    STM32 DMA library
+    A library of generally useful functions
     Copyright (C) 2014 Andrew Zabolotny All Rights Reserved
 
     This code can be freely redistributed under the terms of

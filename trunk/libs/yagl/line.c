@@ -197,13 +197,13 @@ void g_vline (int x, int y1, int y2)
     unsigned dy = y1 & (G_FB_T_PIX - 1);
     if (dy > 0)
     {
-        g_fb_t mask = G_ALLPIX ((1 << G_BPP) - 1) &
-            (((1 << G_FB_T_BITS) - 1) << (dy * G_BPP));
+        g_fb_t mask = G_ALLPIX ((1 << G_BPP) - 1) << (dy * G_BPP);
 
         if (sofs == eofs)
         {
             dy = y2 & (G_FB_T_PIX - 1);
-            mask &= (((1 << G_FB_T_BITS) - 1) >> ((G_FB_T_PIX - 1 - dy) * G_BPP));
+            mask &= G_ALLPIX ((1 << G_BPP) - 1) >>
+                ((G_FB_T_PIX - 1 - dy) * G_BPP);
         }
 
         g.fb [sofs] = (g.fb [sofs] & ~mask) | (pixels & mask);
@@ -223,8 +223,8 @@ void g_vline (int x, int y1, int y2)
     if (sofs == eofs)
     {
         dy = y2 & (G_FB_T_PIX - 1);
-        g_fb_t mask = G_ALLPIX ((1 << G_BPP) - 1) &
-            (((1 << G_FB_T_BITS) - 1) >> ((G_FB_T_PIX - 1 - dy) * G_BPP));
+        g_fb_t mask = G_ALLPIX ((1 << G_BPP) - 1) >>
+            ((G_FB_T_PIX - 1 - dy) * G_BPP);
         g.fb [sofs] = (g.fb [sofs] & ~mask) | (pixels & mask);
     }
 

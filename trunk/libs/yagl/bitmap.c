@@ -12,23 +12,25 @@
 
 uint32_t g_bitmap (int x, int y, const uint8_t *bitmap)
 {
-    unsigned w = *bitmap;
-    unsigned h = ((w & 0xc0) >> 3) + 8;
+    int w = *bitmap;
+    int h = ((w & 0xc0) >> 3) + 8;
     w = (w & 0x3f) + 1;
     uint32_t r = G_MK_SIZE (w, h);
 
-    if (x > g.clip.xmax)
+    if ((x > g.clip.xmax) || (y > g.clip.ymax))
         return r;
 
     if (x < g.clip.xmin)
     {
         x = (g.clip.xmin - x);
-        if (x < 0)
-            return r;
         w -= x;
+        if (w <= 0)
+            return r;
         bitmap += (h >> 3) * x;
         x = g.clip.xmin;
     }
+    else if (x + w > g.clip.xmax)
+        w = g.clip.xmax - x + 1;
 
 #if G_BORD == G_BORD_VLSBT
     while (w)
@@ -43,8 +45,8 @@ uint32_t g_bitmap (int x, int y, const uint8_t *bitmap)
             {
                 if (yy > g.clip.ymax)
                     break;
-                if ((bits & 1)
-                 && (yy >= g.clip.ymin))
+                if ((yy >= g.clip.ymin)
+                 && (bits & 1))
                     _pixel (x, yy, g.color);
 
                 yy++;

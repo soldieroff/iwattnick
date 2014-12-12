@@ -26,55 +26,43 @@ uint8_t frame;
 // current display mode
 uint8_t dmode;
 // scratch variables for display modes
-uint8_t x, y, cp, cx;
+int8_t x, y, cp, cx;
 
 static void switch_mode (uint8_t mode)
 {
-    if (mode > 4)
+    if (mode > 5)
         mode = 0;
+
+    x = y = cp = cx = 0;
+    frame = 0;
 
     switch (mode)
     {
         case 0:
             memset (g.fb, 0xff, G_FB_SIZE);
-            x = y = cp = cx = 0;
             break;
 
-        case 1:
-        case 2:
-        case 3:
-        case 4:
+        case 1 ... 5:
             g_clip_screen ();
             g_clear ();
 
-            if (mode != 1)
-            {
-                // show the clipping rectangle
-                g_color (1);
-                g_rect (2, 2, 125, 61);
-                g_clip (3, 3, 124, 60);
-            }
+            // show the clipping rectangle
+            g_color (1);
+            g_rect (2, 2, 125, 61);
+            g_clip (3, 3, 124, 60);
             break;
     }
 
     if (dmode == 0)
     {
         y = ST7567_START_LINE (0);
-        st7567_send (true, &y, 1);
+        st7567_send (true, (uint8_t *)&y, 1);
     }
 
     dmode = mode;
-    frame = 0;
 }
 
-static void anim (int x, int y, uint8_t *a)
-{
-    unsigned nframes = a [1] + 1;
-    unsigned delay = a [2] + 1;
-    g_anim (x, y, (clock / delay) % nframes, a);
-}
-
-int i2s (int n, uint8_t *buff, unsigned buffsize)
+int i2s (int n, char *buff, unsigned buffsize)
 {
     unsigned x = 0;
     if (n < 0)
@@ -97,40 +85,20 @@ int i2s (int n, uint8_t *buff, unsigned buffsize)
     return x + buffsize - c;
 }
 
-uint32_t g_user_glyph (int x, int y, uint8_t glyph, uint8_t arg)
+uint32_t g_user_glyph (int x, int y, uint32_t glyph)
 {
-    uint8_t buff [8];
+    char buff [8];
     int n;
 
-    switch (glyph)
+    switch (glyph & 0xff)
     {
         case VAR_speed:
-            n = i2s ((clock & 255) - 128, buff, sizeof (buff));
-            return g_printa (x, y, 1, n, buff, arg);
+            n = i2s ((g_clock & 255) - 128, buff, sizeof (buff));
+            return g_printa (x, y, 1, n, buff, glyph >> 8);
 
         case VAR_dist:
-            n = i2s ((clock >> 4) & 127, buff, sizeof (buff));
-            return g_printa (x, y, 1, n, buff, arg);
-
-        default:
-            return 0;
-    }
-}
-
-uint32_t g_user_glyph_size (uint8_t glyph, uint8_t arg)
-{
-    uint8_t buff [8];
-    int n;
-
-    switch (glyph)
-    {
-        case VAR_speed:
-            n = i2s ((clock & 255) - 128, buff, sizeof (buff));
-            return g_printa_size (1, n, buff, arg);
-
-        case VAR_dist:
-            n = i2s ((clock >> 4) & 127, buff, sizeof (buff));
-            return g_printa_size (1, n, buff, arg);
+            n = i2s ((g_clock >> 4) & 127, buff, sizeof (buff));
+            return g_printa (x, y, 1, n, buff, glyph >> 8);
 
         default:
             return 0;
@@ -139,7 +107,7 @@ uint32_t g_user_glyph_size (uint8_t glyph, uint8_t arg)
 
 static void display ()
 {
-    frame++;
+    g_clock = clock;
 
     switch (dmode)
     {
@@ -155,31 +123,10 @@ static void display ()
             cx++; cp++; if (cp > 5) cp = 0;
 
             y = ST7567_START_LINE (y + 1);
-            st7567_send (true, &y, 1);
+            st7567_send (true, (uint8_t *)&y, 1);
             break;
 
         case 1:
-            g_clear ();
-            g_hline (0, 100, 1);
-            g_vline (100, 3, 60);
-            g_hline (0, 100, 62);
-            g_pixel (0, 0);
-            g_pixel (100, 0);
-            g_pixel (99, 2);
-            g_pixel (99, 61);
-            g_pixel (0, 63);
-            g_pixel (100, 63);
-            g_line (3, 3, 97, 60);
-            g_line (97, 3, 3, 60);
-            g_box (2, 20, 22, 23);
-            g_box (2, 30, 22, 53);
-            g_bitmap (40, 42, _BITMAP_huge);
-            anim (40, 10, _ANIM_catrun);
-            anim (70, 30, _ANIM_clearance_forward);
-            break;
-
-        case 2:
-        {
             g_color ((frame >> 7) ^ 1);
 
             for (unsigned i = 0; i < 1000; i++)
@@ -190,10 +137,8 @@ static void display ()
                 g_pixel (x, y);
             }
             break;
-        }
 
-        case 3:
-        {
+        case 2:
             g_color ((frame >> 7) ^ 1);
 
             for (unsigned i = 0; i < 5; i++)
@@ -209,22 +154,65 @@ static void display ()
                 g_line (x1, y1, x2, y2);
             }
             break;
-        }
+
+        case 3:
+            if (frame == 0)
+                cp ^= 1;
+
+            g_color (cp ^ 1);
+            g_box (0, 0, G_FB_W - 1, G_FB_H - 1);
+            g_color (cp);
+
+            x = sin64 (frame) / 16;
+            y = cos64 (frame << 3) / 16;
+
+            for (unsigned i = 0; i < 10; i++)
+            {
+                g_box (x + 9 + i * 11, y + 1, x + 18 + i * 11, y + 1 + i);
+                g_box (x + 9 + i * 11, y + 20, x + 9 + i * 11 + i, y + 29);
+                g_box (x + 9 + i * 11, y + 40, x + 9 + i * 11 + i, y + 40 + i);
+            }
+
+            break;
 
         case 4:
             g_color (0);
-            g_box (0, 0, G_FB_W, G_FB_H);
+            g_box (0, 0, G_FB_W - 1, G_FB_H - 1);
             g_color (1);
-            g_glyph (10, 10, ANIM_cycle_wheel);
-            g_glyph (15, 10, BITMAP_cyclist);
-            g_glyph (26, 10, ANIM_cycle_wheel);
-            g_text (10, 30, TEXT_hello);
+            g_glyph (10, 30, ANIM_cycle_wheel);
+            g_glyph (15, 30, BITMAP_cyclist);
+            g_glyph (26, 30, ANIM_cycle_wheel);
+            g_text (10, 10, TEXT_hello);
             g_text (10, 40, TEXT_sobaka);
             g_text (20, 50, TEXT_royal);
-            g_text (40, 2, TEXT_speed);
-            g_text (60, 20, TEXT_dist);
+            g_text (60, 4, TEXT_speed);
+            g_text (60, 22, TEXT_dist);
+            break;
+
+        case 5:
+            if (frame == 0)
+                cp ^= 1;
+
+            g_color (cp ^ 1);
+            g_box (0, 0, G_FB_W - 1, G_FB_H - 1);
+            g_color (cp);
+
+            x = sin64 (frame) / 16;
+            y = cos64 (frame << 3) / 16;
+
+            for (unsigned i = 0; i < 10; i++)
+                g_bitmap (i * 16 + x, 24 + y, _BITMAP_huge);
+
+
+            g_text (20 + x, 6 + y, TEXT_royal);
+            g_text (10 + x, 16 + y, TEXT_sobaka);
+            g_text (10 + x, 40 + y, TEXT_sobaka);
+            g_text (20 + x, 50 + y, TEXT_royal);
+
             break;
     }
+
+    frame++;
 }
 
 int main (void)
