@@ -44,6 +44,9 @@ extern const uint8_t goc_layouts [];
 /// Get a pointer to glyph data (BITMAP or ANIM) by glyph code
 #define goc_glyph(x)	(goc_glyphs + goc_glyph_index [x])
 
+/// Check if a glyph is animation or bitmap
+#define goc_is_anim(x)	(goc_glyph_types [(x) >> 3] & (1 << ((x) & 7)))
+
 /**
  * This struct holds the status of a single layout
  */
@@ -86,24 +89,12 @@ extern uint32_t g_glyph_size (uint8_t glyph);
  * @arg y
  *      The Y coordinate of the user glyph
  * @arg glyph
- *      User glyph code (usually one of VAR_xxx constants)
- * @arg arg
- *      Additional attribute (specified after comma in goc file)
+ *      User glyph code (usually one of VAR_xxx constants) in lower 8 bits,
+ *      additional args may be present in bits 8-15
  * @return
  *      Glyph width in lower 16 bits, glyph height in upper 16 bits.
  */
-extern uint32_t g_user_glyph (int x, int y, uint8_t glyph, uint8_t arg);
-
-/**
- * Query the size of a custom "glyph"
- * @arg glyph
- *      User glyph code (usually one of VAR_xxx constants)
- * @arg arg
- *      Additional attribute (specified after comma in goc file)
- * @return
- *      Glyph width in lower 16 bits, glyph height in upper 16 bits.
- */
-extern uint32_t g_user_glyph_size (uint8_t glyph, uint8_t arg);
+extern uint32_t g_user_glyph (int x, int y, uint32_t glyph);
 
 /**
  * Display a text object.
@@ -137,7 +128,7 @@ extern uint32_t g_text (int x, int y, const uint8_t *text);
  * @return
  *      Resulting text size, top 16 bits = height, low 16 bits = width
  */
-extern uint32_t g_print (int x, int y, int spacing, unsigned count, const char *text);
+extern uint32_t g_print (int x, int y, int8_t spacing, unsigned count, const char *text);
 
 /**
  * Query the size of the text as if displayed by g_print().
@@ -151,7 +142,7 @@ extern uint32_t g_print (int x, int y, int spacing, unsigned count, const char *
  * @return
  *      Resulting text size, top 16 bits = height, low 16 bits = width
  */
-extern uint32_t g_print_size (int spacing, unsigned count, const char *text);
+extern uint32_t g_print_size (int8_t spacing, unsigned count, const char *text);
 
 /**
  * Display a text string using a single animation as a source of glyph images.
@@ -174,7 +165,7 @@ extern uint32_t g_print_size (int spacing, unsigned count, const char *text);
  * @return
  *      Resulting text size, top 16 bits = height, low 16 bits = width
  */
-extern uint32_t g_printa (int x, int y, int spacing, unsigned count, const uint8_t *text, uint8_t glyph);
+extern uint32_t g_printa (int x, int y, int8_t spacing, unsigned count, const char *text, uint8_t glyph);
 
 /**
  * Query the size of the text as if displayed by g_printa().
@@ -190,6 +181,6 @@ extern uint32_t g_printa (int x, int y, int spacing, unsigned count, const uint8
  * @return
  *      Resulting text size, top 16 bits = height, low 16 bits = width
  */
-extern uint32_t g_printa_size (int spacing, unsigned count, const uint8_t *text, uint8_t glyph);
+extern uint32_t g_printa_size (int8_t spacing, unsigned count, const char *text, uint8_t glyph);
 
 #endif // __GLAYOUT_H__

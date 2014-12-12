@@ -1,5 +1,5 @@
 /*
-    Assembly implementation of memset and memclr for ARM/Thumb
+    Assembly implementation of memcpy for ARM/Thumb
     Copyright (C) 2014 Andrew Zabolotny All Rights Reserved
 
     This code can be freely redistributed under the terms of

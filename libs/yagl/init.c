@@ -12,6 +12,8 @@
 
 // The global graphics context
 g_t g;
+// The graphics subsystem clock
+uint32_t g_clock;
 
 void g_init ()
 {

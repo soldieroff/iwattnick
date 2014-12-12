@@ -9,6 +9,8 @@
 #ifndef __STDFUN_H__
 #define __STDFUN_H__
 
+#include <stdint.h>
+
 /**
  * @file stdfun.h
  *      A number of useful functions, balancedly optimized for speed/size.
@@ -62,5 +64,24 @@ extern void srand (unsigned seed);
  *      A new random number in the range 0..MAX_UNSIGNED_INT
  */
 extern unsigned rand ();
+
+/**
+ * Return the sine of the angle
+ * @arg angle
+ *      Angle, 90° = 64, 180° = 128, 270° = 192 etc.
+ * @return
+ *      The sine value in signed 1.8 format
+ */
+extern int sin64 (uint8_t angle);
+
+/**
+ * Return the cosine of the angle
+ * @arg angle
+ *      Angle, 90° = 64, 180° = 128, 270° = 192 etc.
+ * @return
+ *      The cosine value in signed 1.8 format
+ */
+static inline int cos64 (uint8_t angle)
+{ return sin64 (angle + 64); }
 
 #endif // __STDFUN_H__

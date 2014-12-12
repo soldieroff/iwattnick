@@ -203,10 +203,27 @@ def ParseGlyphs (outf, compiler, glyph_index, text):
             if comma >= 0:
                 arg = ref [comma + 1:]
                 ref = ref [:comma]
-                for x in glyph_index:
-                    if (x != None) and (x.id == arg):
-                        arg = x.index
-                        break
+
+                # Handle pre-defined tags
+                if ref == 'dir':
+                    vals = ['right', 'down'];
+                    try:
+                        arg = vals.index (arg)
+                    except ValueError:
+                        compiler.Fail (outf.name,
+                            "dir must be one of " + str (vals))
+                elif ref == 'align':
+                    vals = ['center', 'right'];
+                    try:
+                        arg = vals.index (arg)
+                    except ValueError:
+                        compiler.Fail (outf.name,
+                            "align must be one of " + str (vals))
+                else:
+                    for x in glyph_index:
+                        if (x != None) and (x.id == arg):
+                            arg = x.index
+                            break
 
             if (type (arg) == str) or (type (arg) == unicode):
                 try:
@@ -612,8 +629,8 @@ class Compiler:
 
 
     def __init__ (self):
-        self.ObjAdd (None, self.variables, ObjVariable ("center"))
-        self.ObjAdd (None, self.variables, ObjVariable ("right"))
+        self.ObjAdd (None, self.variables, ObjVariable ("dir"))
+        self.ObjAdd (None, self.variables, ObjVariable ("align"))
         self.ObjAdd (None, self.actions, ObjAction ("layout", "L"))
 
 

@@ -123,11 +123,11 @@ typedef uint8_t g_fb_t;
  */
 typedef struct
 {
-    uint16_t xmin;
-    uint16_t ymin;
-    uint16_t xmax;
-    uint16_t ymax;
-} g_clip_t;
+    int16_t xmin;
+    int16_t ymin;
+    int16_t xmax;
+    int16_t ymax;
+} g_rect_t;
 
 /**
  * All graphics library variables
@@ -135,7 +135,7 @@ typedef struct
 typedef struct
 {
     /// Clipping rectangle
-    g_clip_t clip;
+    g_rect_t clip;
 
     /// Drawing color
     g_fb_t color;
@@ -147,9 +147,13 @@ typedef struct
 /// The static graphics library variables
 extern g_t g;
 
-/// The system clock variable - used for animations
-extern volatile uint32_t clock;
-
+/**
+ * The system clock variable - used for animations.
+ * WARNING! It is insistently recommended not to change this variable from
+ * interrupt handlers. Instead, at the start of drawing copy the system
+ * clock variable here.
+ */
+extern uint32_t g_clock;
 
 /**
  * Initialize the graphics library
@@ -157,7 +161,8 @@ extern volatile uint32_t clock;
 extern void g_init ();
 
 /**
- * Clear the framebuffer
+ * Clear the framebuffer. This function ignores current color,
+ * and ignores clipping rectangle.
  */
 extern void g_clear ();
 
@@ -324,5 +329,36 @@ extern uint32_t g_anim (int x, int y, unsigned n, const uint8_t *anim);
  *      Frame width in lower 16 bits, height in upper 16 bits.
  */
 extern uint32_t g_anim_size (unsigned n, const uint8_t *anim);
+
+/**
+ * Initialize a rect structure to a empty rectangle at given position
+ * @arg r
+ *      The rectangle
+ * @arg x
+ *      The X coordinate
+ * @arg y
+ *      The Y coordinate
+ */
+extern void g_rect_init (g_rect_t *r, int x, int y);
+
+/**
+ * Extend the rectangle to include given pixel
+ * @arg r
+ *      The rectangle
+ * @arg x
+ *      The X coordinate
+ * @arg y
+ *      The Y coordinate
+ */
+extern void g_rect_extend (g_rect_t *r, int x, int y);
+
+/**
+ * Query the size of a rectangle
+ * @arg r
+ *      The rectangle
+ * @return
+ *      Frame width in lower 16 bits, height in upper 16 bits.
+ */
+extern uint32_t g_rect_size (g_rect_t *r);
 
 #endif // __YAGL_H__
