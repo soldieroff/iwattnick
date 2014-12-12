@@ -626,6 +626,8 @@ class Compiler:
     layouts = []
     # Current code shift
     shift = 0
+    # Temp array for finding free action indices
+    action_slots = [None] * 256
 
 
     def __init__ (self):
@@ -777,7 +779,14 @@ class Compiler:
 
     def ObjAdd (self, inf, lst, obj):
         obj.idshift = self.shift
-        obj.index = len (lst)
+
+        if type (obj) == ObjAction:
+            obj.index = 0
+            while self.action_slots [obj.Value ()] != None:
+                obj.index += 1
+            self.action_slots [obj.Value ()] = obj
+        else:
+            obj.index = len (lst)
 
         for x in lst:
             if x.id == obj.id:
