@@ -160,6 +160,10 @@ text speed 1    \{speed,impact_8x16_digits}КМ/Ч
 text dist 1     \{dist,proun_8x8_digits}КМ
 
 action setvar VN
+action test1 V
+action test2 VN
+action test3
+action test4 LN
 
 # A generic menu layout - the frame, title etc
 layout menuframe 128 64
