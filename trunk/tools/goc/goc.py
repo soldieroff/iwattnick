@@ -163,93 +163,6 @@ def Unescape (s):
         p += len (c)
 
 
-def ParseGlyphs (outf, compiler, glyph_index, text):
-    # Find out the indices of every text character
-    i = 0
-    res = []
-    while i < len (text):
-        if text [i] != '\\':
-            ref = text [i]
-            i += 1
-        elif text [i + 1] == '{':
-            try:
-                e = text.index ('}', i + 2)
-                ref = text [i + 2 : e]
-                i = e + 1
-            except ValueError:
-                compiler.Fail (outf.name,
-                    "Wrong reference in text '%s' at pos %d" % (text, i))
-        else:
-            ref, i = UnescapeChar (text, i + 1)
-
-
-        idx = None
-        for x in glyph_index:
-            if (x != None) and (x.id == ref):
-                idx = x.index
-                break
-
-        if (idx is None) and (opts.OutEnc == None):
-            # Aliases are not in glyph index, do a separate search
-            for x in compiler.aliases:
-                if x.id == ref:
-                    idx = x.ref.index
-                    break
-
-        if idx is None:
-            # Look in the list of variables
-            comma = ref.find (',')
-            arg = 0
-            if comma >= 0:
-                arg = ref [comma + 1:]
-                ref = ref [:comma]
-
-                # Handle pre-defined tags
-                if ref == 'dir':
-                    vals = ['right', 'down'];
-                    try:
-                        arg = vals.index (arg)
-                    except ValueError:
-                        compiler.Fail (outf.name,
-                            "dir must be one of " + str (vals))
-                elif ref == 'align':
-                    vals = ['center', 'right'];
-                    try:
-                        arg = vals.index (arg)
-                    except ValueError:
-                        compiler.Fail (outf.name,
-                            "align must be one of " + str (vals))
-                else:
-                    for x in glyph_index:
-                        if (x != None) and (x.id == arg):
-                            arg = x.index
-                            break
-
-            if (type (arg) == str) or (type (arg) == unicode):
-                try:
-                    # Try to interpret it as a number
-                    arg = int (arg, 0)
-                except (TypeError, ValueError):
-                    compiler.Fail (outf.name,
-                        "Unknown arg '%s' for rendering variable '%s'" % (arg, ref))
-
-            for x in compiler.variables:
-                if x.id == ref:
-                    idx = [ 0, x.index, arg ]
-                    break
-
-            if idx is None:
-                compiler.Fail (outf.name,
-                    "Unknown glyph '%s' referenced in text '%s' at pos %d" % (ref, text, i))
-
-        if type (idx) == list:
-            res.extend (idx)
-        else:
-            res.append (idx)
-
-    return res
-
-
 def CSym (c):
     if (len (c) == 1) and (ord (c) < 32):
         return "\\x%x" % ord (c)
@@ -365,6 +278,12 @@ class SourceFile:
 class Object (object):
     id = None
     idshift = 0
+    used = False
+
+
+    def MarkUsed (self):
+        self.used = True
+
 
     def SetID (self, id):
         id = Unescape (id)
@@ -399,6 +318,7 @@ class ObjBitmap (Object):
     def Write (self, outf, compiler):
         cname = "_" + self.CName ();
         compiler.AddExtern (cname, "uint8_t", u"\"%s\"" % self.id)
+        compiler.AddMacro (self.CName (), self.index, u"\"%s\"" % CSym (self.id))
         outf.write ("\t.globl\t%(name)s\n%(name)s:\n" % { "name": cname })
         if (self.w <= 0) or (self.w > 64):
             compiler.Fail (outf.name, "invalid width %d of bitmap '%s'" % (self.w, self.id))
@@ -432,6 +352,7 @@ class ObjAnim (Object):
 
         cname = "_" + self.CName ();
         compiler.AddExtern (cname, "uint8_t", u"\"%s\"" % self.id)
+        compiler.AddMacro (self.CName (), self.index, u"\"%s\"" % CSym (self.id))
         outf.write ("\t.globl\t%(name)s\n%(name)s:\n" % { "name": cname })
         outf.write ("\t.byte\t(%d<<6)|%d\n" % ((h / 8) - 1, w - 1))
         outf.write ("\t.byte\t%d // nframes\n" % (len (self.bitmap) - 1))
@@ -462,18 +383,117 @@ class ObjText (Object):
         self.SetID (id)
         self.text = text
         self.spacing = spacing
+        self.glyphs = None
+        self.refs = None
 
 
-    def Write (self, outf, compiler, glyph_index, encoding):
-        res = ParseGlyphs (outf, compiler, glyph_index, self.text)
-
+    def Write (self, outf, compiler):
         cname = "_" + self.CName ();
         compiler.AddExtern (cname, "uint8_t", u"\"%s\"" % self.text)
         compiler.AddMacro (self.CName (), cname, u"\"%s\"" % self.text)
         outf.write ("\t.globl\t%(name)s\n%(name)s:\n" % { "name": cname })
         outf.write ("\t.byte\t%d\n" % self.spacing)
-        outf.write ("\t.byte\t%d\n" % (len (res) - 1))
-        WriteByteArray (outf, res)
+        outf.write ("\t.byte\t%d\n" % (len (self.glyphs) - 1))
+        WriteByteArray (outf, self.glyphs)
+
+
+    def Prepare (self, outf, compiler, glyph_index):
+        # Find out the indices of every text character
+        i = 0
+        self.glyphs = []
+        self.refs = []
+        while i < len (self.text):
+            if self.text [i] != '\\':
+                ref = self.text [i]
+                i += 1
+            elif self.text [i + 1] == '{':
+                try:
+                    e = self.text.index ('}', i + 2)
+                    ref = self.text [i + 2 : e]
+                    i = e + 1
+                except ValueError:
+                    compiler.Fail (outf.name,
+                        "Wrong reference in text '%s' at pos %d" % (self.text, i))
+            else:
+                ref, i = UnescapeChar (self.text, i + 1)
+
+            idx = None
+            for x in glyph_index:
+                if (x != None) and (x.id == ref):
+                    self.refs.append (x)
+                    if hasattr (x, "ref"):
+                        idx = x.ref.index
+                    else:
+                        idx = x.index
+                    break
+
+            if idx is None:
+                # Aliases could not be in glyph index, do a separate search
+                for x in compiler.aliases:
+                    if x.id == ref:
+                        idx = x.ref.index
+                        self.refs.append (x)
+                        break
+
+            if idx is None:
+                # Look in the list of variables
+                comma = ref.find (',')
+                arg = 0
+                if comma >= 0:
+                    arg = ref [comma + 1:]
+                    ref = ref [:comma]
+
+                    # Handle pre-defined tags
+                    if ref == 'dir':
+                        vals = ['right', 'down'];
+                        try:
+                            arg = vals.index (arg)
+                        except ValueError:
+                            compiler.Fail (outf.name,
+                                "dir must be one of " + str (vals))
+                    elif ref == 'align':
+                        vals = ['center', 'right'];
+                        try:
+                            arg = vals.index (arg)
+                        except ValueError:
+                            compiler.Fail (outf.name,
+                                "align must be one of " + str (vals))
+                    else:
+                        for x in glyph_index:
+                            if (x != None) and (x.id == arg):
+                                arg = x.index
+                                self.refs.append (x)
+                                break
+
+                if (type (arg) == str) or (type (arg) == unicode):
+                    try:
+                        # Try to interpret it as a number
+                        arg = int (arg, 0)
+                    except (TypeError, ValueError):
+                        compiler.Fail (outf.name,
+                            "Unknown arg '%s' for rendering variable '%s'" % (arg, ref))
+
+                for x in compiler.variables:
+                    if x.id == ref:
+                        idx = [ 0, x.index, arg ]
+                        self.refs.append (x)
+                        break
+
+                if idx is None:
+                    compiler.Fail (outf.name,
+                        "Unknown glyph '%s' referenced in text '%s' at pos %d" % (ref, self.text, i))
+
+            if type (idx) == list:
+                self.glyphs.extend (idx)
+            else:
+                self.glyphs.append (idx)
+
+
+    def MarkUsed (self):
+        self.used = True
+        for x in self.refs:
+            if not x.used:
+                x.MarkUsed ()
 
 
 class ObjAlias (Object):
@@ -486,8 +506,18 @@ class ObjAlias (Object):
         self.SetID (id)
 
 
+    def MarkUsed (self):
+        self.used = True
+        if not self.ref.used:
+            self.ref.MarkUsed ()
+
+
     def Resolve (self, ref):
         self.ref = ref
+
+
+    def Write (self, outf, compiler):
+        compiler.AddMacro (self.CName (), self.ref.index, u"\"%s\"" % CSym (self.id))
 
 
 class ObjVariable (Object):
@@ -509,6 +539,14 @@ class ObjAction (Object):
     def __init__ (self, id, args):
         self.SetID (id)
         self.args = args
+        self.argref = []
+
+
+    def MarkUsed (self):
+        self.used = True
+        for x in self.argref:
+            if not x.used:
+                x.MarkUsed ()
 
 
     def ParseArgs (self, compiler, inf, args):
@@ -521,9 +559,13 @@ class ObjAction (Object):
             if self.args [n] == 'L':
                 x = compiler.ObjFind (compiler.layouts, args [n])
                 if x is None:
-                    compiler.Fail (inf, u"arg %d expected layout id, got '%s'" % \
-                        (n + 1, args [n]))
+                    hint = ""
+                    if (opts.Optimize != "") and (opts.Optimize.find ('l') == -1):
+                        hint = " (possibly optimized out?)"
+                    compiler.Fail (inf, u"arg %d layout '%s' not found%s" % \
+                        (n + 1, args [n], hint))
                 ret.append ([".short", "_LAYOUT_%s-goc_layouts" % x.id])
+                self.argref.append (x)
 
             elif self.args [n] == 'V':
                 x = compiler.ObjFind (compiler.variables, args [n])
@@ -531,6 +573,7 @@ class ObjAction (Object):
                     compiler.Fail (inf, u"arg %d expected variable id, got '%s'" % \
                         (n + 1, args [n]))
                 ret.append ([".short", str (x.index)])
+                self.argref.append (x)
 
             elif self.args [n] == 'N':
                 try:
@@ -560,6 +603,15 @@ class ObjMenu (Object):
         self.items = items
 
 
+    def MarkUsed (self):
+        self.used = True
+        for i in self.items:
+            if not i [0].used:
+                i [0].MarkUsed ()
+            if not i [2].used:
+                i [2].MarkUsed ()
+
+
     def Write (self, outf, compiler):
         cname = "_" + self.CName ();
         compiler.AddExtern (cname, "uint8_t", u"\"%s\"" % self.id)
@@ -582,11 +634,19 @@ class ObjLayout (Object):
     type = "LAYOUT"
 
 
-    def __init__ (self, id, w, h, bytecode):
+    def __init__ (self, id, w, h, bytecode, refs):
         self.SetID (id)
         self.w = w
         self.h = h
         self.bytecode = bytecode
+        self.refs = refs
+
+
+    def MarkUsed (self):
+        self.used = True
+        for x in self.refs:
+            if not x.used:
+                x.MarkUsed ()
 
 
     def Write (self, outf, compiler):
@@ -610,12 +670,6 @@ class Compiler:
     texts = []
     # A list of ALIAS objects
     aliases = []
-    # The list of included files (to avoid including twice)
-    included = []
-    # External symbol definitions
-    externs = []
-    # Macros definitions
-    macros = []
     # Variables
     variables = []
     # Actions
@@ -624,10 +678,18 @@ class Compiler:
     menus = []
     # Layouts
     layouts = []
+    # The list of included files (to avoid including twice)
+    included = []
+    # External symbol definitions
+    externs = []
+    # Macros definitions
+    macros = []
     # Current code shift
     shift = 0
     # Temp array for finding free action indices
     action_slots = [None] * 256
+    # Output files to delete on failure
+    generated_files = []
 
 
     def __init__ (self):
@@ -758,6 +820,10 @@ class Compiler:
             print "%s:%d %s" % (inf.fn, inf.lineno, msg)
         else:
             print "%s: %s" % (inf, msg)
+
+        for fn in self.generated_files:
+            os.unlink (fn)
+
         sys.exit (-1)
 
 
@@ -770,6 +836,9 @@ class Compiler:
 
 
     def ObjFind (self, lst, id):
+        if id is None:
+            return None
+
         id = Unescape (id)
         for x in lst:
             if x.id == id:
@@ -784,6 +853,8 @@ class Compiler:
             obj.index = 0
             while self.action_slots [obj.Value ()] != None:
                 obj.index += 1
+                if obj.index > 63:
+                    self.Fail (inf, "Out of action identifiers: '%s'" % (obj.id))
             self.action_slots [obj.Value ()] = obj
         else:
             obj.index = len (lst)
@@ -918,6 +989,7 @@ class Compiler:
 
     def ParseLayout (self, inf, level, lid, lw, lh):
         bytecode = []
+        refs = []
 
         while not inf.eof:
             l = inf.GetLine (inf, self)
@@ -951,13 +1023,19 @@ class Compiler:
 
             elif t == "draw":
                 did = l.GetToken ()
-                if (not did) or (self.ObjFind (self.layouts, did) is None):
+                if (did is None):
                     self.Fail (inf, "expected layout identifier")
+
+                lay = self.ObjFind (self.layouts, did)
+                if (lay is None):
+                    self.Fail (inf, "layout '%s' not defined" % did)
+
                 x = self.GetNum (inf, l, "x coordinate")
                 y = self.GetNum (inf, l, "y coordinate")
                 bytecode.append ([".byte", "LOP_DRAW"])
-                bytecode.append ([".short", "_LAYOUT_%s-goc_layouts" % did])
+                bytecode.append ([".short", "_LAYOUT_%s-goc_layouts" % lay.id])
                 bytecode.append ([".byte", str (x), str (y)])
+                refs.append (lay)
 
             elif t == "text":
                 tid = l.GetToken ()
@@ -973,6 +1051,7 @@ class Compiler:
                 bytecode.append ([".byte", "LOP_TEXT"])
                 bytecode.append ([".short", "_TEXT_%s-goc_texts" % txt.id])
                 bytecode.append ([".byte", str (x), str (y)])
+                refs.append (txt)
 
             elif t == "menu":
                 mid = l.GetToken ()
@@ -990,6 +1069,7 @@ class Compiler:
                 bytecode.append ([".byte", "LOP_MENU"])
                 bytecode.append ([".short", "_MENU_%s-goc_menus" % menu.id])
                 bytecode.append ([".byte", str (x1), str (y1), str (x2), str (y2)])
+                refs.append (menu)
 
             else:
                 self.Fail (inf, u"unknown keyword `%s'" % t)
@@ -997,7 +1077,7 @@ class Compiler:
             if l.s:
                 self.Fail (inf, u"excess characters in line: `%s'" % l.s)
 
-        self.ObjAdd (inf, self.layouts, ObjLayout (lid, lw, lh, bytecode))
+        self.ObjAdd (inf, self.layouts, ObjLayout (lid, lw, lh, bytecode, refs))
 
 
     def GetNum (self, inf, l, desc):
@@ -1037,6 +1117,24 @@ class Compiler:
         self.macros.append (s.encode ("utf-8"))
 
 
+    def MarkUsed (self, lst):
+        for x in lst:
+            x.MarkUsed ()
+
+
+    def RemoveUnused (self, lst, glyph_index = None):
+        for i in range (len (lst) - 1, -1, -1):
+            x = lst [i]
+
+            if x.used:
+                continue
+
+            if not glyph_index is None:
+                glyph_index [x.index] = None
+
+            del lst [i]
+
+
     def Write (self, opts):
         path,name = os.path.split (self.fn)
         name,ext = os.path.splitext (name)
@@ -1049,6 +1147,7 @@ class Compiler:
         hdrfn = opts.Header % fncomp
 
         outf = file (outfn, "w")
+        self.generated_files.append (outfn)
 
         outf.write (
 """/* File auto-generated by gbc, do not modify */
@@ -1068,81 +1167,110 @@ class Compiler:
             if not hasattr (x, 'ref'):
                 self.Fail (outfn, "Failed to resolve alias '%s' to '%s'" % (x.id, x.refid))
 
-        # Assign indices to all objects.
-        glyph_index = [None] * 256
+        # When optimizing, do it in two passes
+        for optimize_pass in (1, 2):
+            # Assign indices to all objects.
+            glyph_index = [None] * 256
 
-        # First insert single-char objects to respective positions
-        free_idx = 1
-        for x in self.bitmaps + self.anims + self.aliases:
-            x.index = -1
-            if len (x.id) == 1:
-                if opts.OutEnc != None:
-                    try:
-                        idx = ord (x.id.encode (opts.OutEnc)) + x.idshift
-                    except UnicodeDecodeError:
-                        self.Fail (outfn, "Failed to encode identifier '%s'" % x.id)
-                else:
-                    if type (x) == ObjAlias:
+            # First insert single-char objects to respective positions
+            free_idx = 1
+            for x in self.bitmaps + self.anims + self.aliases:
+                x.index = -1
+                if len (x.id) == 1:
+                    if opts.OutEnc != None:
+                        try:
+                            idx = ord (x.id.encode (opts.OutEnc)) + x.idshift
+                        except UnicodeDecodeError:
+                            self.Fail (outfn, "Failed to encode identifier '%s'" % x.id)
+                    else:
+                        if type (x) == ObjAlias:
+                            continue
+
+                        idx = free_idx
+                        free_idx += 1
+
+                    if glyph_index [idx] != None:
+                        self.Fail (outfn, "Duplicate object ID: '%s'+%d" % (x.id, x.idshift))
+                    x.index = idx
+                    glyph_index [idx] = x
+
+            # Now insert all other objects into free slots
+            free_idx = 1 # code 0 is reserved for var references
+            for x in self.bitmaps + self.anims + self.aliases:
+                if x.index == -1:
+                    if (opts.OutEnc == None) and (type (x) == ObjAlias):
+                        self.AddMacro (x.CName (), x.ref.index, u"\"%s\"" % CSym (x.id))
                         continue
 
-                    idx = free_idx
+                    while (free_idx < len (glyph_index)) and (glyph_index [free_idx] != None):
+                        free_idx += 1
+
+                    if free_idx >= len (glyph_index):
+                        self.Fail (outfn, "Too many glyph objects defined (256 maximum)")
+
+                    x.index = free_idx
+                    glyph_index [free_idx] = x
                     free_idx += 1
 
-                if glyph_index [idx] != None:
-                    self.Fail (outfn, "Duplicate object ID: '%s'+%d" % (x.id, x.idshift))
-                x.index = idx
-                glyph_index [idx] = x
-                self.AddMacro (x.CName (), idx, u"\"%s\"" % CSym (x.id))
+            # Convert text into lists of glyph indices
+            for x in self.texts:
+                x.Prepare (outf, self, glyph_index)
 
-        # Now insert all other objects into free slots
-        free_idx = 1 # code 0 is reserved for var references
-        for x in self.bitmaps + self.anims + self.aliases:
-            if x.index == -1:
-                if (opts.OutEnc == None) and (type (x) == ObjAlias):
-                    self.AddMacro (x.CName (), x.ref.index, u"\"%s\"" % CSym (x.id))
-                    continue
+            if opts.Optimize == "":
+                # No need for second pass if not optimizing
+                break
 
-                while (free_idx < len (glyph_index)) and (glyph_index [free_idx] != None):
-                    free_idx += 1
+            # If optimization is enabled, remove unused objects now
+            if opts.Optimize.find ('l') != -1:
+                self.MarkUsed (self.layouts)
+            if opts.Optimize.find ('m') != -1:
+                self.MarkUsed (self.menus)
+            if opts.Optimize.find ('t') != -1:
+                self.MarkUsed (self.texts)
+            if opts.Optimize.find ('g') != -1:
+                self.MarkUsed (self.bitmaps)
+                self.MarkUsed (self.anims)
 
-                if free_idx >= len (glyph_index):
-                    self.Fail (outfn, "Too many glyph objects defined (256 maximum)")
+            # Remove all unused objects
+            self.RemoveUnused (self.bitmaps, glyph_index)
+            self.RemoveUnused (self.anims, glyph_index)
+            self.RemoveUnused (self.aliases, glyph_index)
+            self.RemoveUnused (self.texts)
+            self.RemoveUnused (self.menus)
+            self.RemoveUnused (self.layouts)
 
-                x.index = free_idx
-                glyph_index [free_idx] = x
-                self.AddMacro (x.CName (), free_idx, u"\"%s\"" % CSym (x.id))
-                free_idx += 1
 
         # Remove last unused glyphs (save space)
-        for n in range (255, 0, -1):
-            if glyph_index [n] != None:
+        for n in range (255, -2, -1):
+            if (n == -1) or (glyph_index [n] != None):
                 del glyph_index [n+1:]
                 break
 
-        # Write out the glyph type bitmap
-        glyph_types = [0] * ((len (glyph_index) + 7) / 8)
-        for n in range (len (glyph_index)):
-            if type (glyph_index [n]) == ObjAnim:
-                glyph_types [n / 8] |= 1 << (n & 7);
+        if len (glyph_index):
+            # Write out the glyph type bitmap
+            glyph_types = [0] * ((len (glyph_index) + 7) / 8)
+            for n in range (len (glyph_index)):
+                if type (glyph_index [n]) == ObjAnim:
+                    glyph_types [n / 8] |= 1 << (n & 7);
 
-        outf.write ("\t.globl goc_glyph_types\ngoc_glyph_types:\n")
-        WriteByteArray (outf, glyph_types);
+            outf.write ("\t.globl goc_glyph_types\ngoc_glyph_types:\n")
+            WriteByteArray (outf, glyph_types);
 
-        # Finally, write the index into output file
-        outf.write ("\t.globl goc_glyph_index\ngoc_glyph_index:\n")
-        for n in range (len (glyph_index)):
-            if (glyph_index [n] == None) or \
-               (type (glyph_index [n]) is ObjVariable):
-                s = "0"
-            elif type (glyph_index [n]) is ObjAlias:
-                s = "_" + glyph_index [n].ref.CName () + "-goc_glyphs"
-            else:
-                s = "_" + glyph_index [n].CName () + "-goc_glyphs"
-            outf.write ("\t.short\t%s\n" % s)
+            # Finally, write the index into output file
+            outf.write ("\t.globl goc_glyph_index\ngoc_glyph_index:\n")
+            for n in range (len (glyph_index)):
+                if (glyph_index [n] == None) or \
+                   (type (glyph_index [n]) is ObjVariable):
+                    s = "0"
+                elif type (glyph_index [n]) is ObjAlias:
+                    s = "_" + glyph_index [n].ref.CName () + "-goc_glyphs"
+                else:
+                    s = "_" + glyph_index [n].CName () + "-goc_glyphs"
+                outf.write ("\t.short\t%s\n" % s)
 
         # Write out the bitmaps and animations
         outf.write ("\t.globl goc_glyphs\ngoc_glyphs:\n")
-        for x in self.bitmaps + self.anims:
+        for x in self.bitmaps + self.anims + self.aliases:
             x.Write (outf, self)
 
         # Write out the variables
@@ -1156,7 +1284,7 @@ class Compiler:
         # Write out the TEXT objects
         outf.write ("\t.globl goc_texts\ngoc_texts:\n")
         for x in self.texts:
-            x.Write (outf, self, glyph_index, opts.OutEnc)
+            x.Write (outf, self)
 
         # Write out the MENU objects
         outf.write ("\t.globl goc_menus\ngoc_menus:\n")
@@ -1175,6 +1303,7 @@ class Compiler:
         # Generate the C header file
         if hdrfn != "":
             hdrf = file (hdrfn, "w")
+            self.generated_files.append (hdrfn)
 
             hdrf.write (
 """/* File auto-generated by gbc, do not modify */
@@ -1215,6 +1344,8 @@ parser.add_option("-e", "--input-encoding", dest="InEnc", default="utf-8",
                   help="set encoding for input script files", metavar="ENC")
 parser.add_option("-E", "--output-encoding", dest="OutEnc", default=None,
                   help="set encoding for indexing glyph bitmaps", metavar="ENC")
+parser.add_option("-O", "--optimize", dest="Optimize", default="",
+                  help="optimize keeping all layouts (l), menus (m), texts (t), glyphs (g)", metavar="LIST")
 
 (opts, args) = parser.parse_args ()
 

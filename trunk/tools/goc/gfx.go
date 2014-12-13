@@ -1,1 +1,0 @@
-/home/zap/electronics/projects/iwattnick/tests/stm32vl_discovery/tlcd/gfx.go
