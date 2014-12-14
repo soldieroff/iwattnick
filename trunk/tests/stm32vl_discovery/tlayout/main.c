@@ -80,6 +80,10 @@ void g_user_action (unsigned action, int *args)
             if (args [0] == VAR_test)
                 v_test = args [1];
             break;
+
+        case ACTION_back:
+            active_layout = g_layouts [active_layout].prev;
+            break;
     }
 }
 
@@ -134,7 +138,7 @@ int main (void)
                     break;
 
                 case 's':
-                    active_layout = g_layouts [active_layout].prev;
+                    g_user_action (ACTION_back, 0);
                     break;
             }
         }
