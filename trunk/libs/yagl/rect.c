@@ -33,3 +33,11 @@ uint32_t g_rect_size (g_rect_t *r)
 {
     return G_MK_SIZE (r->xmax - r->xmin + 1, r->ymax - r->ymin + 1);
 }
+
+void g_rect_set_wh (g_rect_t *r, int x, int y, int w, int h)
+{
+    r->xmin = x;
+    r->xmax = x + w - 1;
+    r->ymin = y;
+    r->ymax = y + h - 1;
+}

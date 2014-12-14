@@ -8,7 +8,7 @@
 
 #include HARDWARE_H
 #include "mudbus.h"
-#include "stdfun.h"
+#include "usefun.h"
 
 /// Kick DMA to send next fragment
 void mb_send_next (mudbus_t *mb)

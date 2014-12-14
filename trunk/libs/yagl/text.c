@@ -11,8 +11,6 @@
 #include "glayout.h"
 #include "yaglp.h"
 
-#define SIZE_QUERY_Y 16384
-
 uint32_t g_glyph (int x, int y, uint8_t glyph)
 {
     const uint8_t *data = goc_glyph (glyph);

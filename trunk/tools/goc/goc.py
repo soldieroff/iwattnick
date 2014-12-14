@@ -564,7 +564,7 @@ class ObjAction (Object):
                         hint = " (possibly optimized out?)"
                     compiler.Fail (inf, u"arg %d layout '%s' not found%s" % \
                         (n + 1, args [n], hint))
-                ret.append ([".short", "_LAYOUT_%s-goc_layouts" % x.id])
+                ret.append ([".sleb128", "%d" % x.index])
                 self.argref.append (x)
 
             elif self.args [n] == 'V':
@@ -572,7 +572,7 @@ class ObjAction (Object):
                 if x is None:
                     compiler.Fail (inf, u"arg %d expected variable id, got '%s'" % \
                         (n + 1, args [n]))
-                ret.append ([".short", str (x.index)])
+                ret.append ([".sleb128", str (x.index)])
                 self.argref.append (x)
 
             elif self.args [n] == 'N':
@@ -581,7 +581,7 @@ class ObjAction (Object):
                 except (TypeError, ValueError):
                     compiler.Fail (inf, u"arg %d expected number, got '%s'" % \
                         (n + 1, args [n]))
-                ret.append ([".short", str (x)])
+                ret.append ([".sleb128", str (x)])
 
         return ret
 
@@ -598,9 +598,11 @@ class ObjMenu (Object):
     type = "MENU"
 
 
-    def __init__ (self, id, items):
+    def __init__ (self, id, items, itemh, yshift):
         self.SetID (id)
         self.items = items
+        self.itemh = itemh
+        self.yshift = yshift
 
 
     def MarkUsed (self):
@@ -615,13 +617,15 @@ class ObjMenu (Object):
     def Write (self, outf, compiler):
         cname = "_" + self.CName ();
         compiler.AddExtern (cname, "uint8_t", u"\"%s\"" % self.id)
-        compiler.AddMacro (self.CName (), cname, u"\"%s\"" % self.id)
+        compiler.AddMacro (self.CName (), self.index, u"\"%s\"" % self.id)
         outf.write ("\t.globl\t%(name)s\n%(name)s:\n" % { "name": cname })
         outf.write ("\t.byte\t%d // item count\n" % len (self.items))
+        outf.write ("\t.uleb128\t%d // item height\n" % self.itemh)
+        outf.write ("\t.uleb128\t%d // item y shift\n" % self.yshift)
 
         for i in self.items:
             # i is [act, args, txt]
-            outf.write ("\t.short\t_%s-goc_texts\n" % i [2].CName ())
+            outf.write ("\t.uleb128\t_%s-goc_texts\n" % i [2].CName ())
 
         outf.write ("// menu item actions\n")
         for i in self.items:
@@ -652,9 +656,9 @@ class ObjLayout (Object):
     def Write (self, outf, compiler):
         cname = "_" + self.CName ();
         compiler.AddExtern (cname, "uint8_t", u"\"%s\"" % self.id)
-        compiler.AddMacro (self.CName (), cname, u"\"%s\"" % self.id)
+        compiler.AddMacro (self.CName (), self.index, u"\"%s\"" % self.id)
         outf.write ("\t.globl\t%(name)s\n%(name)s:\n" % { "name": cname })
-        outf.write ("\t.byte\t%d,%d // width, height\n" % (self.w, self.h))
+        outf.write ("\t.uleb128\t%d,%d // width, height\n" % (self.w, self.h))
 
         WriteBytecode (outf, self.bytecode)
 
@@ -780,7 +784,24 @@ class Compiler:
                 mid = l.GetToken ()
                 if not mid:
                     self.Fail (inf, "expected menu identifier")
-                self.ParseMenu (inf, indent, mid)
+
+                ih = l.GetToken ()
+                if (not ih):
+                    self.Fail (inf, "menu item height must follow the identifier")
+                try:
+                    ih = int (ih, 0)
+                except:
+                    self.Fail (inf, "menu item height must be a number, got %s" % ih)
+
+                ys = l.GetToken ()
+                if not ys:
+                    ys = 0
+                else:
+                    try:
+                        ys = int (ys, 0)
+                    except:
+                        self.Fail (inf, "menu item Y shift must be a number, got %s" % ys)
+                self.ParseMenu (inf, indent, mid, ih, ys)
 
             elif t == "layout":
                 lid = l.GetToken ()
@@ -794,7 +815,8 @@ class Compiler:
                     lw = int (lw, 0)
                     lh = int (lh, 0)
                 except:
-                    self.Fail (inf, "layout width and height must be numbers")
+                    self.Fail (inf, "layout width and height must be numbers, got %s and %s" % \
+                        (str (lw), str (lh)))
                 self.ParseLayout (inf, indent, lid, lw, lh)
 
             elif t == "action":
@@ -935,7 +957,7 @@ class Compiler:
         self.ObjAdd (inf, self.anims, ObjAnim (aid, delay, anim))
 
 
-    def ParseMenu (self, inf, level, mid):
+    def ParseMenu (self, inf, level, mid, itemh, yshift):
         items = []
 
         while not inf.eof:
@@ -984,12 +1006,13 @@ class Compiler:
             if l.s:
                 self.Fail (inf, u"excess characters in line: `%s'" % l.s)
 
-        self.ObjAdd (inf, self.menus, ObjMenu (mid, items))
+        self.ObjAdd (inf, self.menus, ObjMenu (mid, items, itemh, yshift))
 
 
     def ParseLayout (self, inf, level, lid, lw, lh):
         bytecode = []
         refs = []
+        has_menu = False
 
         while not inf.eof:
             l = inf.GetLine (inf, self)
@@ -1007,19 +1030,22 @@ class Compiler:
 
             if t == "color":
                 color = self.GetNum (inf, l, "color number")
-                bytecode.append ([".byte", "LOP_COLOR", str (color)])
+                bytecode.append ([".byte", "LOP_COLOR"])
+                bytecode.append ([".uleb128", str (color)])
 
             elif (t == "dot"):
                 x = self.GetNum (inf, l, "x coordinate")
                 y = self.GetNum (inf, l, "y coordinate")
-                bytecode.append ([".byte", "LOP_DOT", str (x), str (y)])
+                bytecode.append ([".byte", "LOP_DOT"])
+                bytecode.append ([".sleb128", str (x), str (y)])
 
             elif (t == "line") or (t == "rect") or (t == "box"):
                 x1 = self.GetNum (inf, l, "x1 coordinate")
                 y1 = self.GetNum (inf, l, "y1 coordinate")
                 x2 = self.GetNum (inf, l, "x2 coordinate")
                 y2 = self.GetNum (inf, l, "y2 coordinate")
-                bytecode.append ([".byte", "LOP_%s" % str (t).upper (), str (x1), str (y1), str (x2), str (y2)])
+                bytecode.append ([".byte", "LOP_%s" % str (t).upper ()])
+                bytecode.append ([".sleb128", str (x1), str (y1), str (x2), str (y2)])
 
             elif t == "draw":
                 did = l.GetToken ()
@@ -1033,8 +1059,8 @@ class Compiler:
                 x = self.GetNum (inf, l, "x coordinate")
                 y = self.GetNum (inf, l, "y coordinate")
                 bytecode.append ([".byte", "LOP_DRAW"])
-                bytecode.append ([".short", "_LAYOUT_%s-goc_layouts" % lay.id])
-                bytecode.append ([".byte", str (x), str (y)])
+                bytecode.append ([".sleb128", str (x), str (y)])
+                bytecode.append ([".byte", "%d" % lay.index])
                 refs.append (lay)
 
             elif t == "text":
@@ -1049,11 +1075,15 @@ class Compiler:
                 x = self.GetNum (inf, l, "x coordinate")
                 y = self.GetNum (inf, l, "y coordinate")
                 bytecode.append ([".byte", "LOP_TEXT"])
-                bytecode.append ([".short", "_TEXT_%s-goc_texts" % txt.id])
-                bytecode.append ([".byte", str (x), str (y)])
+                bytecode.append ([".sleb128", str (x), str (y)])
+                bytecode.append ([".uleb128", "_TEXT_%s-goc_texts" % txt.id])
                 refs.append (txt)
 
             elif t == "menu":
+                if has_menu:
+                    self.Fail (inf, "only one menu per layout allowed")
+                has_menu = True
+
                 mid = l.GetToken ()
                 if mid is None:
                     self.Fail (inf, "menu ID expected")
@@ -1067,8 +1097,8 @@ class Compiler:
                 y2 = self.GetNum (inf, l, "y2 coordinate")
 
                 bytecode.append ([".byte", "LOP_MENU"])
-                bytecode.append ([".short", "_MENU_%s-goc_menus" % menu.id])
-                bytecode.append ([".byte", str (x1), str (y1), str (x2), str (y2)])
+                bytecode.append ([".sleb128", str (x1), str (y1), str (x2), str (y2)])
+                bytecode.append ([".byte", menu.index])
                 refs.append (menu)
 
             else:
@@ -1076,6 +1106,8 @@ class Compiler:
 
             if l.s:
                 self.Fail (inf, u"excess characters in line: `%s'" % l.s)
+
+        bytecode.append ([".byte", "LOP_END"])
 
         self.ObjAdd (inf, self.layouts, ObjLayout (lid, lw, lh, bytecode, refs))
 
@@ -1135,6 +1167,21 @@ class Compiler:
             del lst [i]
 
 
+    def WriteIndexed (self, outf, lst, name):
+        self.AddMacro ("GOC_%sS_COUNT" % name.upper (), len (lst),
+            "length of the goc_%s_index[] array" % name)
+
+        # Write out the index
+        outf.write ("\t.globl goc_%s_index\ngoc_%s_index:\n" % (name, name))
+        for x in lst:
+            outf.write ("\t.short\t_%s-goc_%ss\n" % (x.CName (), name))
+
+        # Write out the objects
+        outf.write ("\t.globl goc_%ss\ngoc_%ss:\n" % (name, name))
+        for x in lst:
+            x.Write (outf, self)
+
+
     def Write (self, opts):
         path,name = os.path.split (self.fn)
         name,ext = os.path.splitext (name)
@@ -1169,6 +1216,9 @@ class Compiler:
 
         # When optimizing, do it in two passes
         for optimize_pass in (1, 2):
+            # Clear macros and externs
+            self.macros = []
+            self.externs = []
             # Assign indices to all objects.
             glyph_index = [None] * 256
 
@@ -1199,7 +1249,6 @@ class Compiler:
             for x in self.bitmaps + self.anims + self.aliases:
                 if x.index == -1:
                     if (opts.OutEnc == None) and (type (x) == ObjAlias):
-                        self.AddMacro (x.CName (), x.ref.index, u"\"%s\"" % CSym (x.id))
                         continue
 
                     while (free_idx < len (glyph_index)) and (glyph_index [free_idx] != None):
@@ -1256,7 +1305,7 @@ class Compiler:
             outf.write ("\t.globl goc_glyph_types\ngoc_glyph_types:\n")
             WriteByteArray (outf, glyph_types);
 
-            # Finally, write the index into output file
+            # Finally, write the glyph index into output file
             outf.write ("\t.globl goc_glyph_index\ngoc_glyph_index:\n")
             for n in range (len (glyph_index)):
                 if (glyph_index [n] == None) or \
@@ -1286,15 +1335,11 @@ class Compiler:
         for x in self.texts:
             x.Write (outf, self)
 
-        # Write out the MENU objects
-        outf.write ("\t.globl goc_menus\ngoc_menus:\n")
-        for x in self.menus:
-            x.Write (outf, self)
+        # Write the menu index and MENU objects into output file
+        self.WriteIndexed (outf, self.menus, "menu")
 
-        # Write out the LAYOUT objects
-        outf.write ("\t.globl goc_layouts\ngoc_layouts:\n")
-        for x in self.layouts:
-            x.Write (outf, self)
+        # Write the layout index and LAYOUT objects into output file
+        self.WriteIndexed (outf, self.layouts, "layout")
 
         # Don't leave IP at odd address, this leads to strange linker errors
         outf.write (".align 2\n")
@@ -1316,15 +1361,21 @@ class Compiler:
             hdrf.write ("""
 /* Glyph indexes in the goc_glyph_index[] table */
 """)
-            hdrf.write ("\n".join (self.macros))
+            hdrf.write ("\n".join (self.macros) + "\n")
             hdrf.write ("""
-
 /* Definitions of tables and graphics objects */
 """)
-            hdrf.write ("\n".join (self.externs))
+            hdrf.write ("\n".join (self.externs) + "\n")
+
+            if len (self.layouts):
+                hdrf.write ("""
+#define IMPLEMENT_MENUS \\
+	g_menu_t g_menus [GOC_MENUS_COUNT]
+#define IMPLEMENT_LAYOUTS \\
+	g_layout_t g_layouts [GOC_LAYOUTS_COUNT]
+""")
 
             hdrf.write ("""
-
 #endif /* __%(name)s_h__ */
 """ % fncomp)
 

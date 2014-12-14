@@ -1,5 +1,5 @@
 #include "stm32vl_discovery.h"
-#include "stdfun.h"
+#include "usefun.h"
 
 // size is expected a power of two
 char test [256], test2 [256];

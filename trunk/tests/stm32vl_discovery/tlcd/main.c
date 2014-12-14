@@ -1,6 +1,6 @@
 #include "stm32vl_discovery.h"
 #include "gears.h"
-#include "stdfun.h"
+#include "usefun.h"
 #include "yagl.h"
 #include "glayout.h"
 
@@ -49,7 +49,7 @@ static void switch_mode (uint8_t mode)
             // show the clipping rectangle
             g_color (1);
             g_rect (2, 2, 125, 61);
-            g_clip (3, 3, 124, 60);
+            g_clip_set (3, 3, 124, 60);
             break;
     }
 

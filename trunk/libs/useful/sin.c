@@ -6,7 +6,7 @@
     GNU Less General Public License version 3 or later.
 */
 
-#include "stdfun.h"
+#include "usefun.h"
 
 static const uint8_t sin64_table [64] =
 {

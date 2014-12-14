@@ -6,7 +6,7 @@
     GNU Less General Public License version 3 or later.
 */
 
-#include "stdfun.h"
+#include "usefun.h"
 
 // simple RNG from https://en.wikipedia.org/wiki/Random_number_generation
 

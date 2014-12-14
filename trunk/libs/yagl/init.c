@@ -8,7 +8,7 @@
 
 #include HARDWARE_H
 #include "yagl.h"
-#include "stdfun.h"
+#include "usefun.h"
 
 // The global graphics context
 g_t g;

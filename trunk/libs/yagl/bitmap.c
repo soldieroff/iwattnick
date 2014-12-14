@@ -24,13 +24,14 @@ uint32_t g_bitmap (int x, int y, const uint8_t *bitmap)
     {
         x = (g.clip.xmin - x);
         w -= x;
-        if (w <= 0)
-            return r;
         bitmap += (h >> 3) * x;
         x = g.clip.xmin;
     }
     else if (x + w > g.clip.xmax)
         w = g.clip.xmax - x + 1;
+
+    if (w <= 0)
+        return r;
 
 #if G_BORD == G_BORD_VLSBT
     while (w)
@@ -79,28 +80,17 @@ uint32_t g_anim (int x, int y, unsigned n, const uint8_t *anim)
         anim += (((wh & 0xc0) >> 6) + 1) * ((wh & 0x3f) + 1);
     }
 
-    return g_bitmap (x, y, anim);
+    return (y == SIZE_QUERY_Y) ?
+        g_bitmap_size (anim) :
+        g_bitmap (x, y, anim);
 }
 
 uint32_t g_bitmap_size (const uint8_t *bitmap)
 {
-    unsigned w = *bitmap;
-    unsigned h = ((w & 0xc0) >> 3) + 8;
-    w = (w & 0x3f) + 1;
-    return G_MK_SIZE (w, h);
+    return g_bitmap (SIZE_QUERY_Y, SIZE_QUERY_Y, bitmap);
 }
 
 uint32_t g_anim_size (unsigned n, const uint8_t *anim)
 {
-    if (n > anim [1])
-        return 0;
-
-    anim += 3;
-    while (n--)
-    {
-        unsigned wh = *anim++;
-        anim += (((wh & 0xc0) >> 6) + 1) * ((wh & 0x3f) + 1);
-    }
-
-    return g_bitmap_size (anim);
+    return g_anim (SIZE_QUERY_Y, SIZE_QUERY_Y, n, anim);
 }

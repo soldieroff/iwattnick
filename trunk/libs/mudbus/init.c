@@ -8,7 +8,7 @@
 
 #include HARDWARE_H
 #include "mudbus.h"
-#include "stdfun.h"
+#include "usefun.h"
 
 void mb_init (mudbus_t *mb, uint8_t busa)
 {
