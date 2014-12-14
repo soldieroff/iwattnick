@@ -13,5 +13,5 @@ LIBS.tlayout$E = yagl$L gears$L useful$L CMSIS$L
 
 $(OUT)$(DIR.tlayout)main.o: $(DIR.tlayout)gfx.h
 
-$(DIR.tlayout)gfx.S $(DIR.tlayout)gfx.h: $(DIR.tlayout)gfx.go
+$(DIR.tlayout)gfx.S $(DIR.tlayout)gfx.h: $(DIR.tlayout)gfx.go $(wildcard include/goc/*.go)
 	tools/goc/goc.py -Ol -Iinclude/goc $< -o $(DIR.tlayout)gfx.S -H $(DIR.tlayout)gfx.h

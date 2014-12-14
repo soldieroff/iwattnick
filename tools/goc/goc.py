@@ -699,7 +699,6 @@ class Compiler:
     def __init__ (self):
         self.ObjAdd (None, self.variables, ObjVariable ("dir"))
         self.ObjAdd (None, self.variables, ObjVariable ("align"))
-        self.ObjAdd (None, self.actions, ObjAction ("layout", "L"))
 
 
     def Parse (self, fn):

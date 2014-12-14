@@ -87,7 +87,7 @@ void g_layout_draw (int x, int y, uint8_t layout)
 
             // (x, y, text) draw a text string
             case LOP_TEXT:
-                g_text (x2, y2, goc_text (*data++));
+                g_text (x2, y2, goc_text (uleb128 (&data)));
                 break;
 
             // (x1, y1, x2, y2, menu) display a menu
