@@ -9,6 +9,8 @@
 #ifndef __YAGLP_H__
 #define __YAGLP_H__
 
+#define SIZE_QUERY_Y 16384
+
 #define VAR_dir		0
 #define VAR_align	1
 

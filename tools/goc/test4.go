@@ -17,7 +17,7 @@ text mi_dist 1  DISTANCE IS \{dist,impact_8x16_digits}
 text helloworld 1 HELLO, WORLD!
 text privetmir 1  ЗДРАВСТВУЙ, МИР!
 
-menu test1
+menu test1 9
     layout(test1)   mi_speed
     layout(test1)   mi_dist
     layout(test1)   1 ANOTHER MENU ITEM

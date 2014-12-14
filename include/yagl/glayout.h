@@ -35,8 +35,14 @@ extern const uint8_t goc_glyph_types [];
 /// TEXT objects
 extern const uint8_t goc_texts [];
 
+/// The index of MENU objects (16-bit offsets relative to goc_menus)
+extern const uint16_t goc_menu_index [];
+
 /// MENU objects
 extern const uint8_t goc_menus [];
+
+/// The index of LAYOUT objects (16-bit offsets relative to goc_layouts)
+extern const uint16_t goc_layout_index [];
 
 /// LAYOUT objects
 extern const uint8_t goc_layouts [];
@@ -47,14 +53,55 @@ extern const uint8_t goc_layouts [];
 /// Check if a glyph is animation or bitmap
 #define goc_is_anim(x)	(goc_glyph_types [(x) >> 3] & (1 << ((x) & 7)))
 
+/// Get a pointer to a text object, given a 16-bit offset
+#define goc_text(x)	(goc_texts + x)
+
+/// Get a pointer to a menu object by menu index
+#define goc_menu(x)	(goc_menus + goc_menu_index [x])
+
+/// Get a pointer to layout data by layout index
+#define goc_layout(x)	(goc_layouts + goc_layout_index [x])
+
+/**
+ * This structure holds the state of a single menu
+ */
+typedef struct
+{
+    /// Active item index of the menu in this layout
+    uint8_t item;
+    /// The current Y scrolling speed
+    int8_t yspeed;
+    /// The current Y shift of the menu
+    int16_t yshift;
+} g_menu_t;
+
+/**
+ * The actions that can be applied on a menu
+ */
+typedef enum
+{
+    G_MENU_UP,
+    G_MENU_DOWN,
+    G_MENU_FIRST,
+    G_MENU_LAST,
+    G_MENU_ACTIVATE,
+} g_menu_action_t;
+
 /**
  * This struct holds the status of a single layout
  */
 typedef struct
 {
+    /// The active menu index
+    uint8_t menu;
     /// The layout that was active before this
     uint8_t prev;
 } g_layout_t;
+
+/// This array is defined in user code using the IMPLEMENT_LAYOUTS macro
+extern g_layout_t g_layouts [];
+/// This array is defined in user code using the IMPLEMENT_MENUS macro
+extern g_menu_t g_menus [];
 
 /**
  * Display a glyph at given position. A glyph may be either
@@ -182,5 +229,54 @@ extern uint32_t g_printa (int x, int y, int8_t spacing, unsigned count, const ch
  *      Resulting text size, top 16 bits = height, low 16 bits = width
  */
 extern uint32_t g_printa_size (int8_t spacing, unsigned count, const char *text, uint8_t glyph);
+
+/**
+ * Draw the layout referenced by index
+ * @arg x
+ *      The X coordinate of the top-left layout corner
+ * @arg y
+ *      The Y coordinate of the top-left layout corner
+ * @arg layout
+ *      The index of the layout to activate (one of the LAYOUT_xxx consts).
+ */
+extern void g_layout_draw (int x, int y, uint8_t layout);
+
+/**
+ * Draw a menu inside the given rectangle
+ * @arg x1
+ *      The X coordinate of the top-left corner of the menu area
+ * @arg y1
+ *      The Y coordinate of the top-left corner of the menu area
+ * @arg x2
+ *      The X coordinate of the bottom-right corner of the menu area
+ * @arg y2
+ *      The Y coordinate of the bottom-right corner of the menu area
+ * @arg menu
+ *      The menu object index (one of the MENU_xxx constants)
+ */
+extern void g_menu_draw (int x1, int y1, int x2, int y2, uint8_t menu);
+
+/**
+ * Move cursor in given menu. If moving past the first/last item the
+ * cursor will wrap around to last/first item respectively.
+ *
+ * This function is usually invoked when user presses the cursor
+ * movement keys.
+ * @arg menu
+ *      The menu object index (one of the MENU_xxx constants)
+ * @arg action
+ *      The action to execute on menu
+ */
+extern void g_menu_event (uint8_t menu, g_menu_action_t action);
+
+/**
+ * Execute a user action. This is usually called from
+ * g_menu_event (..., G_MENU_ACTIVATE).
+ * @arg action
+ *      Action code (one of ACTION_xxx constants)
+ * @arg args
+ *      Additional action arguments as defined in goc file
+ */
+extern void g_user_action (unsigned action, int *args);
 
 #endif // __GLAYOUT_H__

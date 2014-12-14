@@ -6,13 +6,13 @@
     GNU Less General Public License version 3 or later.
 */
 
-#ifndef __STDFUN_H__
-#define __STDFUN_H__
+#ifndef __USEFUN_H__
+#define __USEFUN_H__
 
 #include <stdint.h>
 
 /**
- * @file stdfun.h
+ * @file usefun.h
  *      A number of useful functions, balancedly optimized for speed/size.
  *      Some functions are like their ANSI C counterparts, but they aren't
  *      meant to be 100% compliant with the standard.
@@ -84,4 +84,54 @@ extern int sin64 (uint8_t angle);
 static inline int cos64 (uint8_t angle)
 { return sin64 (angle + 64); }
 
-#endif // __STDFUN_H__
+/**
+ * Decode a number in the unsigned LEB128 format
+ * @arg data
+ *      A pointer to encoded data. On return this pointer
+ *      is updated to point past the encoded data.
+ * @return
+ *      The decoded number
+ */
+extern uint32_t uleb128 (const uint8_t **data);
+
+/**
+ * Decode a number in the signed LEB128 format
+ * @arg data
+ *      A pointer to encoded data. On return this pointer
+ *      is updated to point past the encoded data.
+ * @return
+ *      The decoded number
+ */
+extern int32_t sleb128 (const uint8_t **data);
+
+/**
+ * Skip an (unused) LEB128 value
+ * @arg data
+ *      A pointer to encoded data
+ * @return
+ *      A pointer past the encoded LEB128 value
+ */
+static inline const uint8_t *skip_leb128 (const uint8_t *data)
+{ while (*data & 0x80) data++; return data + 1; }
+
+/**
+ * Return the sign of the argument
+ * @arg x
+ *      The number to extract the sign from
+ * @return
+ *      -1 if @a x is negative, +1 if @a x is positive and 0 if @a x is 0.
+ */
+static inline int sign (int x)
+{ return (x >> 31) + (x > 0); }
+
+/**
+ * Return the absolute value of a number
+ * @arg x
+ *      The number
+ * @return
+ *      +x if @a x is positive, -x if @a x is negative
+ */
+static inline int abs (int x)
+{ return x >= 0 ? x : -x; }
+
+#endif // __USEFUN_H__

@@ -9,7 +9,7 @@
 #include HARDWARE_H
 #include "yagl.h"
 #include "gears.h"
-#include "stdfun.h"
+#include "usefun.h"
 #include "printf.h"
 
 // the next page to upload (0 ... G_FB_H/8-1)

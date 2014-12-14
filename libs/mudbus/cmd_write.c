@@ -8,7 +8,7 @@
 
 #include HARDWARE_H
 #include "mudbus.h"
-#include "stdfun.h"
+#include "usefun.h"
 
 void mb_cmd_write (mudbus_t *mb, const mb_cas_area_t *cas, unsigned ncas)
 {

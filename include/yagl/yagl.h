@@ -172,18 +172,40 @@ extern void g_clear ();
 extern void g_clip_screen ();
 
 /**
- * Set the clipping rectangle. The clipping rectangle must completely
- * lie inside the screen.
- * @arg cxmin
+ * Set the clipping rectangle. The clipping rectangle will be adjusted
+ * so that it completely lies inside the screen area.
+ * @arg xmin
  *      The minimal X clipping coordinate (inclusive)
- * @arg cymin
+ * @arg ymin
  *      The minimal Y clipping coordinate (inclusive)
- * @arg cxmax
+ * @arg xmax
  *      The maximal X clipping coordinate (inclusive)
- * @arg cymax
+ * @arg ymax
  *      The maximal Y clipping coordinate (inclusive)
  */
-extern void g_clip (uint16_t cxmin, uint16_t cymin, uint16_t cxmax, uint16_t cymax);
+extern void g_clip_set (uint16_t xmin, uint16_t ymin, uint16_t xmax, uint16_t ymax);
+
+/**
+ * Set the clipping rectangle. The clipping rectangle will be adjusted
+ * so that it completely lies inside the screen area.
+ * @arg x
+ *      The minimal X clipping coordinate (inclusive)
+ * @arg y
+ *      The minimal Y clipping coordinate (inclusive)
+ * @arg w
+ *      The clipping area width
+ * @arg h
+ *      The clipping area height
+ */
+extern void g_clip_set_wh (uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+
+/**
+ * Adjust the clipping rectangle so that it doesn't lie outside
+ * the screen. This function is automatically called from the g_clip_set*
+ * functions, so you don't have to call it unless you change the clipping
+ * rectangle manually.
+ */
+extern void g_clip_limit ();
 
 /**
  * Set current color
@@ -360,5 +382,18 @@ extern void g_rect_extend (g_rect_t *r, int x, int y);
  *      Frame width in lower 16 bits, height in upper 16 bits.
  */
 extern uint32_t g_rect_size (g_rect_t *r);
+
+/**
+ * Set the boundaries of given rectangle
+ * @arg x
+ *      The X coordinates of the top-left rectangle corner
+ * @arg y
+ *      The Y coordinates of the top-left rectangle corner
+ * @arg w
+ *      The width of the rectangle
+ * @arg h
+ *      The height of the rectangle
+ */
+extern void g_rect_set_wh (g_rect_t *r, int x, int y, int w, int h);
 
 #endif // __YAGL_H__
