@@ -8,6 +8,7 @@ include impact-8x16-digits.go
 var speed
 var dist
 
+action layout L
 action setvar VN
 
 text test1 1 \{align,center}TEST 1

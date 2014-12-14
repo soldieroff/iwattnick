@@ -321,9 +321,9 @@ class ObjBitmap (Object):
         compiler.AddMacro (self.CName (), self.index, u"\"%s\"" % CSym (self.id))
         outf.write ("\t.globl\t%(name)s\n%(name)s:\n" % { "name": cname })
         if (self.w <= 0) or (self.w > 64):
-            compiler.Fail (outf.name, "invalid width %d of bitmap '%s'" % (self.w, self.id))
+            compiler.Fail (outf, "invalid width %d of bitmap '%s'" % (self.w, self.id))
         if (self.h <= 0) or (self.h > 32):
-            compiler.Fail (outf.name, "invalid height %d of bitmap '%s'" % (self.h, self.id))
+            compiler.Fail (outf, "invalid height %d of bitmap '%s'" % (self.h, self.id))
         # Write out the width/height
         outf.write ("\t.byte\t(%d<<6)|%d\n" % ((self.h / 8) - 1, self.w - 1))
         WriteByteArray (outf, self.bitmap)
@@ -361,9 +361,9 @@ class ObjAnim (Object):
             bw = len (bitmap)
             bh = len (bitmap [0]) * 8
             if (bw <= 0) or (bw > 64):
-                compiler.Fail (outf.name, "invalid width %d of bitmap '%s'" % (bw, self.id))
+                compiler.Fail (outf, "invalid width %d of bitmap '%s'" % (bw, self.id))
             if (bh <= 0) or (bh > 32):
-                compiler.Fail (outf.name, "invalid height %d of bitmap '%s'" % (bh, self.id))
+                compiler.Fail (outf, "invalid height %d of bitmap '%s'" % (bh, self.id))
             outf.write ("\t.byte\t(%d<<6)|%d\n" % ((bh / 8) - 1, bw - 1))
             WriteByteArray (outf, bitmap)
 
@@ -412,7 +412,7 @@ class ObjText (Object):
                     ref = self.text [i + 2 : e]
                     i = e + 1
                 except ValueError:
-                    compiler.Fail (outf.name,
+                    compiler.Fail (outf,
                         "Wrong reference in text '%s' at pos %d" % (self.text, i))
             else:
                 ref, i = UnescapeChar (self.text, i + 1)
@@ -449,14 +449,14 @@ class ObjText (Object):
                         try:
                             arg = vals.index (arg)
                         except ValueError:
-                            compiler.Fail (outf.name,
+                            compiler.Fail (outf,
                                 "dir must be one of " + str (vals))
                     elif ref == 'align':
                         vals = ['center', 'right'];
                         try:
                             arg = vals.index (arg)
                         except ValueError:
-                            compiler.Fail (outf.name,
+                            compiler.Fail (outf,
                                 "align must be one of " + str (vals))
                     else:
                         for x in glyph_index:
@@ -470,7 +470,7 @@ class ObjText (Object):
                         # Try to interpret it as a number
                         arg = int (arg, 0)
                     except (TypeError, ValueError):
-                        compiler.Fail (outf.name,
+                        compiler.Fail (outf,
                             "Unknown arg '%s' for rendering variable '%s'" % (arg, ref))
 
                 for x in compiler.variables:
@@ -480,7 +480,7 @@ class ObjText (Object):
                         break
 
                 if idx is None:
-                    compiler.Fail (outf.name,
+                    compiler.Fail (outf,
                         "Unknown glyph '%s' referenced in text '%s' at pos %d" % (ref, self.text, i))
 
             if type (idx) == list:
@@ -630,7 +630,7 @@ class ObjMenu (Object):
         outf.write ("// menu item actions\n")
         for i in self.items:
             # i is [act, args, txt]
-            args = i [0].ParseArgs (compiler, outf.name, i [1])
+            args = i [0].ParseArgs (compiler, outf, i [1])
             WriteBytecode (outf, args)
 
 
@@ -829,6 +829,12 @@ class Compiler:
                     self.Fail ("max 3 arguments are allowed, got '%s'" % args)
                 self.ObjAdd (inf, self.actions, ObjAction (aid, args))
 
+            elif t == "used":
+                otype = l.GetToken ()
+                if not otype:
+                    self.Fail (inf, "expected object type")
+                self.Used (inf, otype, l)
+
             else:
                 self.Fail (inf, "unknown keyword `%s'" % t)
 
@@ -840,6 +846,8 @@ class Compiler:
         if isinstance (inf, SourceFile):
             print "%s:%d %s" % (inf.fn, inf.lineno, msg)
         else:
+            if isinstance (inf, file):
+                inf = inf.name
             print "%s: %s" % (inf, msg)
 
         for fn in self.generated_files:
@@ -890,6 +898,16 @@ class Compiler:
                     self.Fail (inf, "Duplicate %s identifier: '%s'" % (obj.type, obj.id))
 
         lst.append (obj)
+
+
+    def Used (self, inf, otype, l):
+        if otype == "glyph":
+            tmp = ObjText ("tmp", l.GetString (), 0)
+            glyph_index = self.bitmaps + self.anims
+            tmp.Prepare (inf, self, glyph_index)
+            tmp.MarkUsed ()
+        else:
+            self.Fail (inf, "unkown object type to mark used: '%s'" % otype)
 
 
     def ParseBitmap (self, inf, bid):
