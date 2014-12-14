@@ -14,4 +14,4 @@ LIBS.tlcd$E = yagl$L gears$L useful$L CMSIS$L
 $(OUT)$(DIR.tlcd)main.o: $(DIR.tlcd)gfx.h
 
 $(DIR.tlcd)gfx.S $(DIR.tlcd)gfx.h: $(DIR.tlcd)gfx.go
-	tools/goc/goc.py -Ecp1251 -Iinclude/goc $< -o $(DIR.tlcd)gfx.S -H $(DIR.tlcd)gfx.h
+	tools/goc/goc.py -Ot -Iinclude/goc $< -o $(DIR.tlcd)gfx.S -H $(DIR.tlcd)gfx.h
