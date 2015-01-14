@@ -9,7 +9,7 @@ GOCFLAGS = -I../../include/goc
 CC = gcc
 CFLAGS = -s -Wl,--oformat=binary -nostartfiles -nodefaultlibs -I ../../include
 
-TESTS = test1 test2 test3 test4
+TESTS = test1 test2 test3 test4 test5
 
 all: $(OUT) $(addprefix $(OUT),$(addsuffix .S,$(TESTS)))
 
@@ -27,3 +27,4 @@ $(OUT)%.bin: $(OUT)%.S
 $(OUT)test2.S: GOCFLAGS += -Ecp1251
 $(OUT)test3.S: GOCFLAGS += -Ot
 $(OUT)test4.S: GOCFLAGS += -Ol
+$(OUT)test5.S: GOCFLAGS += -Ot -Dtest=abcde

@@ -231,6 +231,10 @@ class SourceLine:
         return r
 
 
+    def Empty (self):
+        return len (self.s.strip (" \t")) == 0
+
+
 class SourceFile:
     def __init__ (self, fn, enc):
         self.fn = fn
@@ -415,7 +419,7 @@ class ObjText (Object):
                     compiler.Fail (outf,
                         "Wrong reference in text '%s' at pos %d" % (self.text, i))
             else:
-                ref, i = UnescapeChar (self.text, i + 1)
+                ref, i = UnescapeChar (self.text, i)
 
             idx = None
             for x in glyph_index:
@@ -562,16 +566,16 @@ class ObjAction (Object):
                     hint = ""
                     if (opts.Optimize != "") and (opts.Optimize.find ('l') == -1):
                         hint = " (possibly optimized out?)"
-                    compiler.Fail (inf, u"arg %d layout '%s' not found%s" % \
-                        (n + 1, args [n], hint))
+                    compiler.Fail (inf, u"action `%s' arg %d layout '%s' not found%s" % \
+                        (self.id, n + 1, args [n], hint))
                 ret.append ([".sleb128", "%d" % x.index])
                 self.argref.append (x)
 
             elif self.args [n] == 'V':
                 x = compiler.ObjFind (compiler.variables, args [n])
                 if x is None:
-                    compiler.Fail (inf, u"arg %d expected variable id, got '%s'" % \
-                        (n + 1, args [n]))
+                    compiler.Fail (inf, u"action `%s' arg %d expected variable id, got '%s'" % \
+                        (self.id, n + 1, args [n]))
                 ret.append ([".sleb128", str (x.index)])
                 self.argref.append (x)
 
@@ -579,8 +583,8 @@ class ObjAction (Object):
                 try:
                     x = int (args [n], 0)
                 except (TypeError, ValueError):
-                    compiler.Fail (inf, u"arg %d expected number, got '%s'" % \
-                        (n + 1, args [n]))
+                    compiler.Fail (inf, u"action `%s' arg %d expected number, got '%s'" % \
+                        (self.id, n + 1, args [n]))
                 ret.append ([".sleb128", str (x)])
 
         return ret
@@ -694,11 +698,24 @@ class Compiler:
     action_slots = [None] * 256
     # Output files to delete on failure
     generated_files = []
-
+    # Preprocessor variables and values
+    pp_variables = {}
+    # Suppress output if > 0
+    pp_suppress = 0
+    # if-then-else stack
+    pp_ite_stack = []
 
     def __init__ (self):
         self.ObjAdd (None, self.variables, ObjVariable ("dir"))
         self.ObjAdd (None, self.variables, ObjVariable ("align"))
+
+
+    def Define (self, vars):
+        for s in vars:
+            vv = s.split ('=', 1)
+            if len (vv) == 1:
+                vv.append ('1')
+            self.pp_variables [vv [0]] = vv [1]
 
 
     def Parse (self, fn):
@@ -709,6 +726,8 @@ class Compiler:
             inf = SourceFile (fn, opts.InEnc)
         except IOError:
             self.Fail (fn, "failed to open file")
+
+        ite_sl0 = len (self.pp_ite_stack)
 
         while not inf.eof:
             l = inf.GetLine (inf, self)
@@ -726,7 +745,54 @@ class Compiler:
                     self.Fail (inf, "expected include file name")
                 if not fid in self.included:
                     self.included.append (fid)
-                    self.Parse (self.FindFile (fid))
+                    self.Parse (self.FindFile (fid, os.path.dirname (fn)))
+
+            elif t == "define":
+                var = l.GetToken ()
+                val = l.GetToken ()
+                self.pp_variables [var] = val
+
+            elif t == "undef":
+                var = l.GetToken ()
+                del self.pp_variables [var]
+
+            elif t == "if" or t == "elif" or t == "else":
+                cond = True
+                taken = False
+
+                if t != "else":
+                    var = l.GetToken ()
+                    val = l.GetToken ()
+
+                    if val == "":
+                        cond = bool (val)
+                    else:
+                        cond = (val == self.pp_variables.get (var))
+
+                if (t == "elif") or (t == "else"):
+                    if len (self.pp_ite_stack) <= ite_sl0:
+                        self.Fail (inf, "%s must be preceeded by if" % t)
+                    taken = self.pp_ite_stack.pop ()
+                    if not taken [0]:
+                        self.pp_suppress -= 1
+                    taken = taken [1]
+                    if taken:
+                        cond = False
+
+                self.pp_ite_stack.append ((cond, taken or cond))
+
+                if not cond:
+                    self.pp_suppress += 1
+
+            elif t == "endif":
+                if len (self.pp_ite_stack) <= ite_sl0:
+                    self.Fail (inf, "endif must be preceeded by if")
+                if not self.pp_ite_stack.pop () [0]:
+                    self.pp_suppress -= 1
+
+            elif self.pp_suppress > 0:
+                # inside a disabled preprocessor block
+                continue
 
             elif t == "bitmap":
                 bid = l.GetToken ()
@@ -838,8 +904,12 @@ class Compiler:
             else:
                 self.Fail (inf, "unknown keyword `%s'" % t)
 
-            if l.s:
+            if not l.Empty ():
                 self.Fail (inf, "excess characters in line: `%s'" % l.s)
+
+        if len (self.pp_ite_stack) > ite_sl0:
+            self.Fail (inf, "%d if's not closed by respective endif's" % \
+                (len (self.pp_ite_stack) - ite_sl0))
 
 
     def Fail (self, inf, msg):
@@ -856,11 +926,14 @@ class Compiler:
         sys.exit (-1)
 
 
-    def FindFile (self, fn):
+    def FindFile (self, fn, xdir):
         for p in opts.IncludePath:
             r = os.path.join (p, fn)
             if os.access (r, os.F_OK):
                 return r
+        r = os.path.join (xdir, fn)
+        if os.access (r, os.F_OK):
+            return r
         return fn
 
 
@@ -1020,7 +1093,7 @@ class Compiler:
 
             items.append ([act, args, txt])
 
-            if l.s:
+            if not l.Empty ():
                 self.Fail (inf, u"excess characters in line: `%s'" % l.s)
 
         self.ObjAdd (inf, self.menus, ObjMenu (mid, items, itemh, yshift))
@@ -1121,7 +1194,7 @@ class Compiler:
             else:
                 self.Fail (inf, u"unknown keyword `%s'" % t)
 
-            if l.s:
+            if not l.Empty ():
                 self.Fail (inf, u"excess characters in line: `%s'" % l.s)
 
         bytecode.append ([".byte", "LOP_END"])
@@ -1406,7 +1479,7 @@ parser.add_option("-o", "--output", dest="Output", default="%(path)s/%(name)s.S"
 parser.add_option("-H", "--header", dest="Header", default="%(path)s/%(name)s.h",
                   help="generate C header FILE", metavar="FILE")
 parser.add_option("-I", "--include", dest="IncludePath",
-                  default=None, action="append",
+                  default=[], action="append",
                   help="append DIR to include path list", metavar="DIR")
 parser.add_option("-e", "--input-encoding", dest="InEnc", default="utf-8",
                   help="set encoding for input script files", metavar="ENC")
@@ -1414,6 +1487,9 @@ parser.add_option("-E", "--output-encoding", dest="OutEnc", default=None,
                   help="set encoding for indexing glyph bitmaps", metavar="ENC")
 parser.add_option("-O", "--optimize", dest="Optimize", default="",
                   help="optimize keeping all layouts (l), menus (m), texts (t), glyphs (g)", metavar="LIST")
+parser.add_option("-D", "--define", dest="Variables",
+                  default=[], action="append",
+                  help="define the value of a variable", metavar="VAR{=VAL}")
 
 (opts, args) = parser.parse_args ()
 
@@ -1421,10 +1497,8 @@ if len (args) == 0:
     parser.print_help ()
     sys.exit (-1)
 
-if not opts.IncludePath:
-    opts.IncludePath = []
-
 c = Compiler ()
+c.Define (opts.Variables)
 for fn in args:
     c.Parse (fn)
 c.Write (opts)
