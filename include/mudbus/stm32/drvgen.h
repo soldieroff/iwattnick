@@ -12,7 +12,7 @@
 #include "usart.h"
 #include "dma.h"
 
-/*
+/**
     @file mudbus-stm32-gen.h
     This file will generate C code for initializing the 'driver' field of a mudbus_t
     structure with information specific for a UART/DMA combination for the STM32

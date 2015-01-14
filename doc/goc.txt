@@ -155,8 +155,14 @@ action [ID] {(L|V|N){(L|V|N){(L|V|N)}}}
     LAYOUT(L) - switch to layout L
 
 
-menu [ID]
-    declare a menu. The statement is followed by indented lines
+menu [ID] [LH] [VS]
+    declare a menu.
+
+    ID - action identifier
+    LH - line height, in pixels
+    VS - vertical spacing, pixels between text lines
+
+    The statement is followed by indented lines
     that define the menu items, in the format:
 
     [action] [text-id]

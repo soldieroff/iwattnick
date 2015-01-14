@@ -49,7 +49,7 @@ text mi_speed 1 Скорость\{align,right}\{speed,proun_8x8_digits}
 text mi_dist 1  Расстояние\{align,right}\{dist,proun_8x8_digits}
 text mi_test 1  Значение\{align,right}\{test,proun_8x8_digits}
 
-text test2 1    \{align,center}МЕНЮ 2 \{cycle_wheel}\{cyclist}\{cycle_wheel}
+text test2 1    \{align,center}МЕНЮ 2\{align,right}\{cycle_wheel}\{cyclist}\{cycle_wheel}\32
 text mi_back 1  Назад
 
 var speed
